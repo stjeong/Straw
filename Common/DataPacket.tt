@@ -1,0 +1,12 @@
+﻿<#@ import namespace="System.Runtime.Remoting.Messaging" #>
+<#@ include file="MultiOutput.tt" #>
+<#
+    CallContext.SetData("XMLFileName", "DataPacket.xml");
+
+    ProcessTemplate("DataPacket.cs.tt", "DataPacket.generated.cs");
+    ProcessTemplate("DataPacket.js.tt", "DataPacket.generated.js");
+    ProcessTemplate("DataPacket.h.tt", "DataPacket.generated.h");
+    ProcessTemplate("DataPacket.cpp.tt", "DataPacket.generated.cpp");
+
+    DeleteOldOutputs();
+#>

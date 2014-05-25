@@ -1,0 +1,645 @@
+﻿<#@ template language="C#" Hostspecific="True" #>
+<#@ assembly name="System.Xml.dll" #>
+
+<#@ Import Namespace="System.Xml" #>
+<#@ Import Namespace="System.Collections" #>
+<#@ import namespace="System.Runtime.Remoting.Messaging" #>
+
+<#
+	// ver 1.4 (2014-05-25)
+
+	if (string.IsNullOrEmpty(this.XmlPath) == true)
+	{
+		return null;
+	}
+	
+	XmlDocument xml = new XmlDocument();
+	xml.Load(Host.ResolvePath(this.XmlPath));
+
+	XmlNode moduleNode = xml.SelectSingleNode("module");
+
+	string nsText = moduleNode.Attributes.GetNamedItem("namespace").InnerText;
+	XmlNodeList clrNamespaces = moduleNode.SelectNodes("genSrcParameter/item[@category='clr']");
+
+    bool isWindowsPhone = false;
+
+    foreach (XmlNode item in clrNamespaces)
+    {
+        if (item.InnerText == "Microsoft.Phone")
+        {
+            isWindowsPhone = true;
+            break;
+        }
+    }
+
+	XmlNodeList typeList = moduleNode.SelectNodes("type");
+    XmlNodeList enumList = moduleNode.SelectNodes("enum");
+
+#>
+
+// <#= DateTime.Now.ToString() #>
+
+namespace <#= nsText #>
+{
+<#
+	this.PushIndent("    ");
+	foreach (XmlNode item in clrNamespaces)
+	{
+#>
+using <#=  item.InnerText #>;
+<#
+	}
+#>
+
+<#
+	var eventList = moduleNode.SelectNodes("type/events/event");
+	foreach (XmlNode eventItem in eventList)
+	{
+		var eventAttr = eventItem.Attributes;
+		string eventName = eventAttr.GetNamedItem("name").InnerText;
+		string eventArgTypeName = eventAttr.GetNamedItem("argType").InnerText;
+
+        string eventArgName = eventName + "EventArgs";
+		string eventDelegateName = eventName + "EventHandler";
+			
+#>
+public partial class <#=eventArgName #> : EventArgs
+{
+    <#=eventArgTypeName #> _item;
+
+    public <#=eventArgTypeName #> Item
+    {
+        get { return _item; }
+    }
+
+    public <#=eventArgName #>(<#=eventArgTypeName #> item)
+    {
+        _item = item;
+    }
+}
+<#
+	}
+#>
+	
+<#
+	foreach (XmlNode enumItem in enumList)
+	{
+		var xmlAttr = enumItem.Attributes;
+		string enumName = xmlAttr.GetNamedItem("name").InnerText;
+        var enumItemList = enumItem.SelectNodes("item");
+#>
+
+[DataContract]
+public enum <#= enumName #>
+{
+<#
+        foreach (XmlNode item in enumItemList)
+		{
+			var itemAttr = item.Attributes;
+			string itemName = itemAttr.GetNamedItem("name").InnerText;        
+#>
+    [EnumMember]
+    <#= itemName #>,
+<#
+        }
+#>	
+}    
+
+<#
+
+    }
+
+	
+	foreach (XmlNode type in typeList)
+	{
+		var xmlAttr = type.Attributes;
+		string typeName = xmlAttr.GetNamedItem("name").InnerText;
+		bool observable = GetPropValueAsBool(xmlAttr, "observable", true);
+		bool bindingImplement = GetPropValueAsBool(xmlAttr, "bindingImplement", true);
+		bool skipCtor = GetPropValueAsBool(xmlAttr, "skipCtor", true);
+        bool commandImplement = GetPropValueAsBool(xmlAttr, "command", false);
+        string baseTypeName = GetPropValueAsText(xmlAttr, "base", null);
+        bool hasBaseType = string.IsNullOrEmpty(baseTypeName) == false;
+#>
+
+[DataContract]
+public partial class <#= typeName #>
+<#
+		if (bindingImplement == true || commandImplement == true)
+		{
+			#>
+			: 
+
+            <#
+            bool firstInheritance = true;
+
+            if (hasBaseType == true)
+            {
+                firstInheritance = false;
+			#>
+			    <#= baseTypeName #>
+			<#
+            }
+            #>
+
+			<#
+
+            if (bindingImplement == true && hasBaseType == false)
+            {
+                if (firstInheritance == false)
+                {
+			#>
+			,
+			<#
+                }
+
+                firstInheritance = false;
+			#>
+			INotifyPropertyChanged
+			<#
+            }
+
+            if (commandImplement == true)
+            {
+                if (firstInheritance == false)
+                {
+			#>
+			,
+			<#
+                }
+			#>
+			ICommandSource
+			<#
+            }
+		}
+#>		
+{
+    <#
+    if (commandImplement == true)
+    {
+	#>
+        
+    public ICommand Command
+    {
+        get { return (ICommand)GetValue(CommandProperty); }
+        set { SetValue(CommandProperty, value); }
+    }
+
+    public static readonly DependencyProperty CommandProperty =
+        DependencyProperty.Register("Command", typeof(ICommand), typeof(<#= typeName #>), new UIPropertyMetadata(null));
+
+    public object CommandParameter
+    {
+        get { return (object)GetValue(CommandParameterProperty); }
+        set { SetValue(CommandParameterProperty, value); }
+    }
+
+    public static readonly DependencyProperty CommandParameterProperty =
+        DependencyProperty.Register("CommandParameter", typeof(object), typeof(<#= typeName #>), new UIPropertyMetadata(null));
+
+
+    public IInputElement CommandTarget
+    {
+        get { return (IInputElement)GetValue(CommandTargetProperty); }
+        set { SetValue(CommandTargetProperty, value); }
+    }
+
+    public static readonly DependencyProperty CommandTargetProperty =
+    DependencyProperty.Register("CommandTarget", typeof(IInputElement), typeof(<#= typeName #>), new UIPropertyMetadata(null));
+
+    protected virtual void FireCommand()
+    {
+        var command = Command;
+        var parameter = CommandParameter;
+        var target = CommandTarget;
+
+        var routedCommmand = command as RoutedCommand;
+        if (routedCommmand != null && routedCommmand.CanExecute(parameter, target))
+        {
+            routedCommmand.Execute(parameter, target);
+        }
+        else if (command != null && command.CanExecute(parameter))
+        {
+            command.Execute(parameter);
+        }
+    }
+
+	<#
+    }
+    #>
+
+
+    
+<#
+		var commandList = type.SelectNodes("commands/command");
+		foreach (XmlNode commandItem in commandList)
+		{
+			var cmdAttr = commandItem.Attributes;
+			string cmdName = cmdAttr.GetNamedItem("name").InnerText;
+#>
+	ICommand _<#= ToLowerMemberName(cmdName) #>;
+    public ICommand <#= cmdName #>
+    {
+        get 
+        {
+            if (_<#= ToLowerMemberName(cmdName) #> == null)
+            {
+                _<#= ToLowerMemberName(cmdName) #> = new Relay<#= cmdName #>(this);
+            }
+
+            return _<#= ToLowerMemberName(cmdName) #>; 
+        }
+        set { _<#= ToLowerMemberName(cmdName) #> = value; }
+    }
+
+    public class Relay<#= cmdName #> : ICommand
+    {
+        bool _canRun = true;
+        public bool CanRun
+        {
+            get { return _canRun; }
+            set
+            {
+                if (_canRun != value)
+                {
+                    _canRun = value;
+                    OnCanExecuteChanged();
+                }
+            }
+        }
+
+        private void OnCanExecuteChanged()
+        {
+            if (CanExecuteChanged == null)
+            {
+                return;
+            }
+
+            CanExecuteChanged(this, EventArgs.Empty);
+        }
+
+        <#= typeName #> _parent;
+        public Relay<#= cmdName #>(MainWindow parent)
+        {
+            _parent = parent;
+        }
+
+        public void Execute(object parameter)
+        {
+            _parent.<#= cmdName #>Execute(parameter);
+        }
+
+        public bool CanExecute(object paramter)
+        {
+            _parent.<#= cmdName #>CanExceute(this, paramter);
+            return _canRun;
+        }
+
+        public event EventHandler CanExecuteChanged;
+    }
+
+    partial void <#= cmdName #>CanExceute(Relay<#= cmdName #> cmd, object paramter);
+<#
+		}
+#>
+
+	
+<#
+		var propList = type.SelectNodes("properties/property");
+		foreach (XmlNode propItem in propList)
+		{
+			var propAttr = propItem.Attributes;
+			string propName = propAttr.GetNamedItem("name").InnerText;
+			string propTypeName = propAttr.GetNamedItem("type").InnerText;
+			string propPrivateName = ToLowerMemberName(propName);
+			
+			bool hasDefaultValue = propAttr.GetNamedItem("defaultValue") != null;			
+			string defaultValueText = string.Empty;
+			if (hasDefaultValue == true)
+			{
+				defaultValueText = " = " + propAttr.GetNamedItem("defaultValue").InnerText;
+			}
+			
+			bool hasPostCode = propItem.SelectSingleNode("postCode") != null;
+			string postCodeText = string.Empty;
+			if (hasPostCode == true)
+			{
+				postCodeText = propItem.SelectSingleNode("postCode").InnerText;
+			}
+
+            bool varInitialize = false;
+			
+            string propLastTypeName = propTypeName;
+			bool isCollection = GetPropValueAsBool(propAttr, "isCollection", false);
+            if (isCollection == true)
+            {
+                propLastTypeName = "ObservableCollection<" + propTypeName +">";
+                varInitialize = true;
+            }
+
+            bool isArray = false;
+            int arrayCount = GetPropValueAsInt(propAttr, "array", -1);
+            if (arrayCount != -1)
+            {
+                varInitialize = true;
+                isArray = true;
+            }
+			
+#>
+	<#= propLastTypeName #> <# if (isArray == true) { #> [] <# } #>  _<#= propPrivateName #><#= defaultValueText #>
+    
+    <#
+    if (varInitialize == true)
+    {
+    #>
+    = new <#= propLastTypeName #> <# if (isArray == true) { #> [<#= arrayCount #>] <# } else { #> () <# } #>
+    <#
+    }
+    #>
+    ;
+    	
+    /// <exclude />
+	[DataMember]
+	public <#= propLastTypeName #> <# if (isArray == true) { #> [] <# } #> <#= propName #>
+	{
+		get { return this._<#= propPrivateName #>; }
+		
+		set
+		{
+			if (this._<#= propPrivateName #> == value)
+			{
+				return;
+			}
+			
+			this._<#= propPrivateName #> = value;
+			OnPropertyChanged("<#= propName #>"); <#= postCodeText #>
+		}
+	}
+	
+<#
+		}
+#>
+
+<#
+		var dpList = type.SelectNodes("dependencyProperties/dependencyProperty");
+		foreach (XmlNode dpItem in dpList)
+		{
+			var dpAttr = dpItem.Attributes;
+			string dpName = dpAttr.GetNamedItem("name").InnerText;
+            string dpTypeName = dpAttr.GetNamedItem("type").InnerText;
+            string dpDefaultValue = dpAttr.GetNamedItem("defaultValue").InnerText;
+            string changedHandler = null;
+            
+            var itemAttr = dpAttr.GetNamedItem("changedHandler");
+            if (itemAttr != null)
+            {
+                changedHandler = itemAttr.InnerText;
+            }
+#>
+    public static readonly DependencyProperty <#= dpName #>Property = DependencyProperty.Register("<#= dpName #>", typeof(<#= dpTypeName #>), typeof(<#= typeName #>), 
+    
+    <#
+    if (string.IsNullOrEmpty(changedHandler) == true || changedHandler == "false")
+    {
+    #>
+    new FrameworkPropertyMetadata(<#= dpDefaultValue #>));
+    <#
+    }
+    else
+    {
+    #>
+    new FrameworkPropertyMetadata(<#= dpDefaultValue #>, On<#= dpName #>PropertyChanged));
+    <#
+    }
+    #>
+
+    public <#= dpTypeName #> <#= dpName #>
+    {
+        get { return (<#= dpTypeName #>)GetValue(<#= dpName #>Property); }
+        set { SetValue(<#= dpName #>Property, value); }
+    }
+
+    // static void On<#= dpName #>PropertyChanged(DependencyObject source, DependencyPropertyChangedEventArgs e);
+<#
+		}
+#>
+
+<#
+		var routedEventList = type.SelectNodes("routedEvents/routedEvent");
+		foreach (XmlNode routedEventItem in routedEventList)
+		{
+			var routedEventAttr = routedEventItem.Attributes;
+			string routedEventName = routedEventAttr.GetNamedItem("name").InnerText;
+#>
+    public static readonly RoutedEvent <#= routedEventName #>Event = EventManager.RegisterRoutedEvent("<#= routedEventName #>", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(<#= typeName #>));
+
+    public event RoutedEventHandler <#= routedEventName #>
+    {
+        add { AddHandler(<#= routedEventName #>Event, value); }
+        remove { RemoveHandler(<#= routedEventName #>Event, value); }
+    }
+    
+<#
+		}
+#>
+
+<#
+		eventList = type.SelectNodes("events/event");
+		foreach (XmlNode eventItem in eventList)
+		{
+			var eventAttr = eventItem.Attributes;
+			string eventName = eventAttr.GetNamedItem("name").InnerText;
+			string eventArgTypeName = eventAttr.GetNamedItem("argType").InnerText;
+
+            string eventArgName = eventName + "EventArgs";
+			string eventDelegateName = eventName + "EventHandler";
+			
+#>
+	public delegate void <#=eventDelegateName #>(object sender, <#=eventArgName #> e);
+    public event <#=eventDelegateName #> <#=eventName #>;
+
+    protected virtual void On<#=eventName #>(<#=eventArgTypeName #> item)
+    {
+        if (<#=eventName #> == null)
+        {
+            return;
+        }
+
+        <#=eventArgName #> arg = new <#=eventArgName #>(item);
+        <#=eventName #>(this, arg);
+    }
+	
+<#
+		}
+#>
+
+    <#
+    if (hasBaseType == false)
+    {
+        if (isWindowsPhone == false)
+        {
+    #>
+	[field:NonSerialized]
+    <#
+        }
+    #>
+	public event PropertyChangedEventHandler PropertyChanged;
+	protected virtual void OnPropertyChanged(string propertyName)
+	{
+		if (PropertyChanged == null)
+		{
+			return;
+		}
+
+		PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+	}   
+    
+<#
+    }
+#>         
+
+	public static <# if (hasBaseType == true) { #> new <# } #> class Members
+	{
+<#
+        if (hasBaseType == true)
+        {
+            propList = moduleNode.SelectNodes("type[@name='" + baseTypeName + "']/properties/property");
+
+            foreach (XmlNode propItem in propList)
+		    {
+                var propAttr = propItem.Attributes;
+			    string dpName = propAttr.GetNamedItem("name").InnerText;
+#>
+		public const string <#= dpName #> = "<#= dpName #>";
+<#
+            }
+        }
+
+		propList = type.SelectNodes("properties/property");
+		foreach (XmlNode propItem in propList)
+		{
+			var propAttr = propItem.Attributes;
+			string dpName = propAttr.GetNamedItem("name").InnerText;
+#>
+		public const string <#= dpName #> = "<#= dpName #>";
+<#
+		}
+#>
+	}
+    
+	public static <# if (hasBaseType == true) { #> new <# } #> class SqlVarMembers
+	{
+<#
+        if (hasBaseType == true)
+        {
+            propList = moduleNode.SelectNodes("type[@name='" + baseTypeName + "']/properties/property");
+
+            foreach (XmlNode propItem in propList)
+		    {
+                var propAttr = propItem.Attributes;
+			    string dpName = propAttr.GetNamedItem("name").InnerText;
+#>
+		public const string <#= dpName #> = "<#= dpName #>";
+<#
+            }
+        }
+
+		propList = type.SelectNodes("properties/property");
+		foreach (XmlNode propItem in propList)
+		{
+			var propAttr = propItem.Attributes;
+			string dpName = propAttr.GetNamedItem("name").InnerText;
+#>
+		public const string <#= dpName #> = "@<#= dpName #>";
+<#
+		}
+#>
+	}
+}
+
+<#
+    
+	}
+	
+	this.PopIndent();
+#>
+}
+
+<#+
+    private string ToLowerMemberName(string name)
+    {
+        if (string.IsNullOrEmpty(name) == true)
+        {
+            return "";
+        }
+
+		if (char.IsUpper(name[0]) == true)
+		{
+			char ch = (char)(name[0] + 32);
+			return ch.ToString() + name.Substring(1);
+		}
+
+        return name;
+    }
+
+    private bool GetPropValueAsBool(XmlAttributeCollection attrs, string name, bool defaultValue)
+    {
+        var nodeAttr = attrs.GetNamedItem(name);
+        if (nodeAttr == null)
+        {
+            return defaultValue;
+        }
+
+        bool result;
+        if (bool.TryParse(nodeAttr.InnerText, out result) == false)
+        {
+            return defaultValue;
+        }
+
+        return result;
+    }
+
+    private string GetPropValueAsText(XmlAttributeCollection attrs, string name, string defaultValue)
+    {
+        var nodeAttr = attrs.GetNamedItem(name);
+        if (nodeAttr == null)
+        {
+            return defaultValue;
+        }
+
+        return nodeAttr.InnerText;
+    }
+
+    private int GetPropValueAsInt(XmlAttributeCollection attrs, string name, int defaultValue)
+    {
+        var nodeAttr = attrs.GetNamedItem(name);
+        if (nodeAttr == null)
+        {
+            return defaultValue;
+        }
+
+        int result;
+        if (int.TryParse(nodeAttr.InnerText, out result) == false)
+        {
+            return defaultValue;
+        }
+
+        return result;
+    }
+#>
+
+
+<#+
+    string XmlPath
+    {
+        get 
+        { 
+            string result = (string)CallContext.GetData("XMLFileName");
+            if (result == null)
+                result = string.Empty;
+            return result; 
+        }
+    }
+
+#>
+

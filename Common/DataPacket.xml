@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<module namespace="Kerberos.Data">
+
+    <genSrcParameter>
+        <item category="clr">System.Data</item>
+        <item category="clr">System</item>
+
+        <item category="clr">System.Collections.Generic</item>
+        <item category="clr">System.Text</item>
+        <item category="clr">System.IO</item>
+        <item category="clr">System.Diagnostics</item>
+        <item category="clr">System.Configuration</item>
+        <item category="clr">System.Runtime.InteropServices</item>
+        <item category="clr">System.ComponentModel</item>
+        <item category="clr">System.Runtime.CompilerServices</item>
+        <item category="clr">System.Runtime.Serialization</item>
+        <item category="clr">System.Collections.ObjectModel</item>
+    </genSrcParameter>
+
+    <type name="CpuInfo">
+        <properties>
+            <!-- usage percent -->
+            <property name="Unit" type="float" isCollection="true" />
+        </properties>
+    </type>
+
+    <type name="MemoryInfo">
+        <properties>
+            <!-- in megabytes -->
+            <property name="MaxMB" type="long" />
+            <property name="CurrentMB" type="long" />
+        </properties>
+    </type>
+
+    <type name="PacketBase">
+        <properties>
+            <property name="ApiKey" type="string" size="40" />
+            <property name="EnvInfo" type="string" />
+        </properties>
+    </type>
+
+    <type name="SystemInfo" base="PacketBase">
+        <properties>
+            <property name="CpuUsage" type="CpuInfo" isCollection="true" />
+            <property name="MemoryUsage" type="MemoryInfo" />
+        </properties>
+    </type>
+
+</module>
