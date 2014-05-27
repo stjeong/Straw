@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-25 오후 2:21:39
+// 2014-05-26 오후 10:39:11
 
 namespace Kerberos.Data
 {
@@ -276,13 +276,13 @@ namespace Kerberos.Data
         
     
     	
-    	ObservableCollection<CpuInfo>   _cpuUsage
+    	CpuInfo   _cpuUsage
         
-            = new ObservableCollection<CpuInfo>  ()         ;
+            ;
         	
         /// <exclude />
     	[DataMember]
-    	public ObservableCollection<CpuInfo>  CpuUsage
+    	public CpuInfo  CpuUsage
     	{
     		get { return this._cpuUsage; }
     		

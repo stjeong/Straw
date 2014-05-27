@@ -41,7 +41,7 @@
 
     <type name="SystemInfo" base="PacketBase">
         <properties>
-            <property name="CpuUsage" type="CpuInfo" isCollection="true" />
+            <property name="CpuUsage" type="CpuInfo" />
             <property name="MemoryUsage" type="MemoryInfo" />
         </properties>
     </type>

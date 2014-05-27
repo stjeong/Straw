@@ -24,16 +24,7 @@ namespace PacketTest
             cpu.Unit.Add(0.0f);
             cpu.Unit.Add(0.0f);
             cpu.Unit.Add(0.0f);
-            info.CpuUsage.Add(cpu);
-
-            // dual CPU
-            cpu = new CpuInfo();
-            cpu.Unit.Add(12.5f);
-            cpu.Unit.Add(0.0f);
-            cpu.Unit.Add(3.0f);
-            cpu.Unit.Add(2.0f);
-
-            info.CpuUsage.Add(cpu);
+            info.CpuUsage = cpu;
 
             MemoryInfo memoy = new MemoryInfo();
             memoy.MaxMB = 8589934592; // 8 * 1024 * 1024 * 1024;

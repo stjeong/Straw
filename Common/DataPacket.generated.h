@@ -3,7 +3,7 @@
 #pragma once
 
 
-// 2014-05-25 오후 2:21:39
+// 2014-05-26 오후 10:39:11
 
 #include <string>
 #include <vector>
@@ -89,7 +89,7 @@ class SystemInfo
 					
 {
 public:
-	vector<CpuInfo> _cpuUsage;
+	CpuInfo _cpuUsage;
 	
 	MemoryInfo _memoryUsage;
 	
