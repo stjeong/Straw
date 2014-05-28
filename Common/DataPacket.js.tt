@@ -1,10 +1,5 @@
-﻿
-
-
-/*
-
+﻿/*
 SystemInfo
-
 {
 	"CpuUsage":
 		[
@@ -15,5 +10,279 @@ SystemInfo
 	"ApiKey": "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571",
 	"EnvInfo":null
 }
-
 */
+
+<#@ template language="C#" Hostspecific="True" #>
+<#@ assembly name="System.Xml.dll" #>
+
+<#@ Import Namespace="System.Xml" #>
+<#@ Import Namespace="System.Collections" #>
+<#@ import namespace="System.Runtime.Remoting.Messaging" #>
+
+<#
+	// ver 1.4 (2014-05-25)
+
+	if (string.IsNullOrEmpty(this.XmlPath) == true)
+	{
+		return null;
+	}
+	
+	XmlDocument xml = new XmlDocument();
+	xml.Load(Host.ResolvePath(this.XmlPath));
+
+	XmlNode moduleNode = xml.SelectSingleNode("module");
+
+	XmlNodeList typeList = moduleNode.SelectNodes("type");
+    XmlNodeList enumList = moduleNode.SelectNodes("enum");
+
+#>
+
+// <#= DateTime.Now #>
+
+<#
+	foreach (XmlNode enumItem in enumList)
+	{
+		var xmlAttr = enumItem.Attributes;
+		string enumName = xmlAttr.GetNamedItem("name").InnerText;
+        var enumItemList = enumItem.SelectNodes("item");
+#>
+
+public enum <#= enumName #>
+{
+<#
+        foreach (XmlNode item in enumItemList)
+		{
+			var itemAttr = item.Attributes;
+			string itemName = itemAttr.GetNamedItem("name").InnerText;        
+#>
+    [EnumMember]
+    <#= itemName #>,
+<#
+        }
+#>	
+}    
+
+<#
+
+    }
+
+	
+	foreach (XmlNode type in typeList)
+	{
+		var xmlAttr = type.Attributes;
+		string typeName = xmlAttr.GetNamedItem("name").InnerText;
+		bool observable = GetPropValueAsBool(xmlAttr, "observable", true);
+		bool bindingImplement = GetPropValueAsBool(xmlAttr, "bindingImplement", true);
+		bool skipCtor = GetPropValueAsBool(xmlAttr, "skipCtor", true);
+        bool commandImplement = GetPropValueAsBool(xmlAttr, "command", false);
+        string baseTypeName = GetPropValueAsText(xmlAttr, "base", null);
+        bool hasBaseType = string.IsNullOrEmpty(baseTypeName) == false;
+#>
+
+var <#= typeName #> =	
+{
+<#
+	var propList = type.SelectNodes("properties/property");
+#>
+
+<#
+		foreach (XmlNode propItem in propList)
+		{
+			var propAttr = propItem.Attributes;
+			string propName = propAttr.GetNamedItem("name").InnerText;
+			string propTypeName = propAttr.GetNamedItem("type").InnerText;
+
+			string propPrivateName = ToLowerMemberName(propName);
+			
+			bool hasDefaultValue = propAttr.GetNamedItem("defaultValue") != null;			
+			string defaultValueText = string.Empty;
+			if (hasDefaultValue == true)
+			{
+                defaultValueText = propAttr.GetNamedItem("defaultValue").InnerText;
+			}
+            else
+            {
+                defaultValueText = GetDefaultValueByType(propTypeName);
+            }
+			
+			bool hasPostCode = propItem.SelectSingleNode("postCode") != null;
+			string postCodeText = string.Empty;
+			if (hasPostCode == true)
+			{
+				postCodeText = propItem.SelectSingleNode("postCode").InnerText;
+			}
+
+            bool varInitialize = false;
+			
+            string propLastTypeName = propTypeName;
+			bool isCollection = GetPropValueAsBool(propAttr, "isCollection", false);
+            if (isCollection == true)
+            {
+                propLastTypeName = "vector<" + propTypeName +">";
+                varInitialize = true;
+            }
+
+            bool isArray = false;
+            int arrayCount = GetPropValueAsInt(propAttr, "array", -1);
+            if (arrayCount != -1)
+            {
+                varInitialize = true;
+                isArray = true;
+            }
+			
+#>
+	<#= propPrivateName #>: <#= defaultValueText #><# if (isArray == true) { #> [] <# } #>,
+	
+<#
+		}
+#>
+
+	Members: [
+<#
+        if (hasBaseType == true)
+        {
+            propList = moduleNode.SelectNodes("type[@name='" + baseTypeName + "']/properties/property");
+
+            foreach (XmlNode propItem in propList)
+		    {
+                var propAttr = propItem.Attributes;
+			    string dpName = propAttr.GetNamedItem("name").InnerText;
+#>
+		"<#= dpName #>",
+<#
+            }
+        }
+
+		propList = type.SelectNodes("properties/property");
+		foreach (XmlNode propItem in propList)
+		{
+			var propAttr = propItem.Attributes;
+			string dpName = propAttr.GetNamedItem("name").InnerText;
+#>
+		"<#= dpName #>",
+<#
+		}
+#>
+	]
+}
+
+<#
+		if (hasBaseType == true)
+		{
+			#>
+			
+            <#= typeName #>.prototype = new <#= baseTypeName#>();
+
+			<#
+		}
+#>	
+
+<#
+    
+	}
+
+
+	
+	this.PopIndent();
+#>
+
+
+
+
+<#+
+    private string GetDefaultValueByType(string typeName)
+    {
+        switch (typeName)
+        {
+            case "string":
+                return "\"\"";
+
+            case "float":
+            case "double":
+                return "0.0";
+
+            case "long":
+            case "int":
+                return "0";
+        }
+
+        return "null";
+    }
+
+    private string ToLowerMemberName(string name)
+    {
+        if (string.IsNullOrEmpty(name) == true)
+        {
+            return "";
+        }
+
+		if (char.IsUpper(name[0]) == true)
+		{
+			char ch = (char)(name[0] + 32);
+			return ch.ToString() + name.Substring(1);
+		}
+
+        return name;
+    }
+
+    private bool GetPropValueAsBool(XmlAttributeCollection attrs, string name, bool defaultValue)
+    {
+        var nodeAttr = attrs.GetNamedItem(name);
+        if (nodeAttr == null)
+        {
+            return defaultValue;
+        }
+
+        bool result;
+        if (bool.TryParse(nodeAttr.InnerText, out result) == false)
+        {
+            return defaultValue;
+        }
+
+        return result;
+    }
+
+    private string GetPropValueAsText(XmlAttributeCollection attrs, string name, string defaultValue)
+    {
+        var nodeAttr = attrs.GetNamedItem(name);
+        if (nodeAttr == null)
+        {
+            return defaultValue;
+        }
+
+        return nodeAttr.InnerText;
+    }
+
+    private int GetPropValueAsInt(XmlAttributeCollection attrs, string name, int defaultValue)
+    {
+        var nodeAttr = attrs.GetNamedItem(name);
+        if (nodeAttr == null)
+        {
+            return defaultValue;
+        }
+
+        int result;
+        if (int.TryParse(nodeAttr.InnerText, out result) == false)
+        {
+            return defaultValue;
+        }
+
+        return result;
+    }
+#>
+
+
+<#+
+    string XmlPath
+    {
+        get 
+        { 
+            string result = (string)CallContext.GetData("XMLFileName");
+            if (result == null)
+                result = string.Empty;
+            return result; 
+        }
+    }
+
+#>
+

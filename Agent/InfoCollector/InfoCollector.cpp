@@ -117,6 +117,7 @@ int _tmain(int argc, _TCHAR* argv[])
             break;
         }
 
+        ::OutputDebugString(L"No Information [apiKey, envInfo]");
         Sleep(1000);
     }
 

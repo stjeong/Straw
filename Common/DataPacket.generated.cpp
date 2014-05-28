@@ -1,12 +1,20 @@
 
 
 
-// 2014-05-26 오후 10:39:11
+// 2014-05-29 오전 1:07:31
 
 #include "stdafx.h"
 #include "DataPacket.generated.h"
 
 	
+
+
+		wstring ConnectionInfo::Members::Address = L"Address";
+		wstring ConnectionInfo::Members::Port = L"Port";
+    
+		wstring ConnectionInfo::SqlVarMembers::Address = L"Address";
+		wstring ConnectionInfo::SqlVarMembers::Port = L"Port";
+
 
 
 		wstring CpuInfo::Members::Unit = L"Unit";

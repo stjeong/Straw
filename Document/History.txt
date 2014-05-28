@@ -1,8 +1,13 @@
 ﻿
 
+2014-05-29
+    - (half) Impl of DataPacket.generated.js for Javascript
+    - Add global ConnectionInfo type
+
+
 
 2014-05-25
-     - Common Data Packets are definend in /Common/DataPacket.xml, which is used by Source Code Generation Tool.
+    - Common Data Packets are definend in /Common/DataPacket.xml, which is used by Source Code Generation Tool.
        So, DataPacket.xml converts to DataPacket.generated.cs for C#
                                       DataPacket.generated.js for Javascript
                                       DataPacket.generated.java for Java
@@ -11,6 +16,6 @@
 
 
 2014-05-24
-     - v1 request document (/Document/v1_req.pptx)
-     - Create your own projects for Server in /Server
-     - Create your own projects for Agents in /Agent
+    - v1 request document (/Document/v1_req.pptx)
+    - Create your own projects for Server in /Server
+    - Create your own projects for Agents in /Agent

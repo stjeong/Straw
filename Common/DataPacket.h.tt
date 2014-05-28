@@ -96,7 +96,14 @@ class <#= typeName #>
 {
 public:
 <#
-		var propList = type.SelectNodes("properties/property");
+	var propList = type.SelectNodes("properties/property");
+#>
+
+    <#= typeName #>()
+    {
+    }
+
+<#
 		foreach (XmlNode propItem in propList)
 		{
 			var propAttr = propItem.Attributes;
@@ -114,7 +121,13 @@ public:
 			string defaultValueText = string.Empty;
 			if (hasDefaultValue == true)
 			{
-				defaultValueText = " = " + propAttr.GetNamedItem("defaultValue").InnerText;
+				defaultValueText = " = ";
+                if (propTypeName == "wstring")
+                {
+                    defaultValueText += "L";
+                }
+
+                defaultValueText += propAttr.GetNamedItem("defaultValue").InnerText;
 			}
 			
 			bool hasPostCode = propItem.SelectSingleNode("postCode") != null;

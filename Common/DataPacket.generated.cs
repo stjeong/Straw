@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-26 오후 10:39:11
+// 2014-05-29 오전 1:07:31
 
 namespace Kerberos.Data
 {
@@ -19,6 +19,95 @@ namespace Kerberos.Data
     using System.Collections.ObjectModel;
     
     	
+    
+    [DataContract]
+    public partial class ConnectionInfo
+    			: 
+    
+                
+    						INotifyPropertyChanged
+    					
+    {
+        
+    
+        
+    
+    	
+    	string   _address = "192.168.0.10"
+        
+            ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public string  Address
+    	{
+    		get { return this._address; }
+    		
+    		set
+    		{
+    			if (this._address == value)
+    			{
+    				return;
+    			}
+    			
+    			this._address = value;
+    			OnPropertyChanged("Address"); 
+    		}
+    	}
+    	
+    	int   _port = 80
+        
+            ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public int  Port
+    	{
+    		get { return this._port; }
+    		
+    		set
+    		{
+    			if (this._port == value)
+    			{
+    				return;
+    			}
+    			
+    			this._port = value;
+    			OnPropertyChanged("Port"); 
+    		}
+    	}
+    	
+    
+    
+    
+    
+        	[field:NonSerialized]
+        	public event PropertyChangedEventHandler PropertyChanged;
+    	protected virtual void OnPropertyChanged(string propertyName)
+    	{
+    		if (PropertyChanged == null)
+    		{
+    			return;
+    		}
+    
+    		PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+    	}   
+        
+             
+    
+    	public static  class Members
+    	{
+    		public const string Address = "Address";
+    		public const string Port = "Port";
+    	}
+        
+    	public static  class SqlVarMembers
+    	{
+    		public const string Address = "@Address";
+    		public const string Port = "@Port";
+    	}
+    }
+    
     
     [DataContract]
     public partial class CpuInfo

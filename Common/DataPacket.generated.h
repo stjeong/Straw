@@ -3,17 +3,52 @@
 #pragma once
 
 
-// 2014-05-26 오후 10:39:11
+// 2014-05-29 오전 1:07:31
 
 #include <string>
 #include <vector>
 using namespace std;
 	
 
+class ConnectionInfo
+		
+{
+public:
+
+    ConnectionInfo()
+    {
+    }
+
+	wstring _address = L"192.168.0.10";
+	
+	int _port = 80;
+	
+
+	class Members
+	{
+    public:
+		static wstring Address;
+		static wstring Port;
+	};
+    
+	class SqlVarMembers
+	{
+    public:
+		static wstring Address;
+		static wstring Port;
+	};
+};
+
+
 class CpuInfo
 		
 {
 public:
+
+    CpuInfo()
+    {
+    }
+
 	vector<float> _unit;
 	
 
@@ -35,6 +70,11 @@ class MemoryInfo
 		
 {
 public:
+
+    MemoryInfo()
+    {
+    }
+
 	long _maxMB;
 	
 	long _currentMB;
@@ -60,6 +100,11 @@ class PacketBase
 		
 {
 public:
+
+    PacketBase()
+    {
+    }
+
 	wstring _apiKey;
 	
 	wstring _envInfo;
@@ -89,6 +134,11 @@ class SystemInfo
 					
 {
 public:
+
+    SystemInfo()
+    {
+    }
+
 	CpuInfo _cpuUsage;
 	
 	MemoryInfo _memoryUsage;

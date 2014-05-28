@@ -17,6 +17,13 @@
         <item category="clr">System.Collections.ObjectModel</item>
     </genSrcParameter>
 
+    <type name="ConnectionInfo">
+        <properties>
+            <property name="Address" type="string" defaultValue="&quot;192.168.0.10&quot;" />
+            <property name="Port" type="int" defaultValue="80" />
+        </properties>
+    </type>
+
     <type name="CpuInfo">
         <properties>
             <!-- usage percent -->
