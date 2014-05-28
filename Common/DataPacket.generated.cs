@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-29 오전 1:07:31
+// 2014-05-29 오전 1:41:33
 
 namespace Kerberos.Data
 {
@@ -33,7 +33,7 @@ namespace Kerberos.Data
         
     
     	
-    	string   _address = "192.168.0.10"
+    	string   _address = "www.geeksaga.com"
         
             ;
         	

@@ -156,12 +156,22 @@ public:
             }
 			
 #>
+private:
 	<#= propLastTypeName #> _<#= propPrivateName #><#= defaultValueText #><# if (isArray == true) { #> [] <# } #>;
-	
+public:
+	<#= propLastTypeName #> Get<#= propPrivateName #>()
+    {
+        return _<#= propPrivateName #>;
+    }
+	void Set<#= propPrivateName #>(<#= propLastTypeName #> value)
+    {
+        _<#= propPrivateName #> = value;
+    }
 <#
 		}
 #>
 
+public:
 	class Members
 	{
     public:

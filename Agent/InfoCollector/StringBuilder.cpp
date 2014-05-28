@@ -4,6 +4,26 @@
 #include <Windows.h>
 #include <Winuser.h>
 
+#include <locale>
+
+string ws2s(const std::wstring& wstr)
+{
+    size_t converted = 0;
+    char *pBuf = new char[wstr.length() + 1];
+    if (pBuf == nullptr)
+    {
+        return "";
+    }
+
+    wcstombs_s(&converted, pBuf, wstr.length() + 1, wstr.c_str(), _TRUNCATE);
+
+    string txt = pBuf;
+
+    delete [] pBuf;
+
+    return txt;
+}
+
 void StringBuilder::push_back( wchar_t ch )
 {
     wstring text;

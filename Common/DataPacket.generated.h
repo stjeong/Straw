@@ -3,7 +3,7 @@
 #pragma once
 
 
-// 2014-05-29 오전 1:07:31
+// 2014-05-29 오전 1:41:34
 
 #include <string>
 #include <vector>
@@ -19,11 +19,30 @@ public:
     {
     }
 
-	wstring _address = L"192.168.0.10";
-	
+private:
+	wstring _address = L"www.geeksaga.com";
+public:
+	wstring Getaddress()
+    {
+        return _address;
+    }
+	void Setaddress(wstring value)
+    {
+        _address = value;
+    }
+private:
 	int _port = 80;
-	
+public:
+	int Getport()
+    {
+        return _port;
+    }
+	void Setport(int value)
+    {
+        _port = value;
+    }
 
+public:
 	class Members
 	{
     public:
@@ -49,9 +68,19 @@ public:
     {
     }
 
+private:
 	vector<float> _unit;
-	
+public:
+	vector<float> Getunit()
+    {
+        return _unit;
+    }
+	void Setunit(vector<float> value)
+    {
+        _unit = value;
+    }
 
+public:
 	class Members
 	{
     public:
@@ -75,11 +104,30 @@ public:
     {
     }
 
+private:
 	long _maxMB;
-	
+public:
+	long GetmaxMB()
+    {
+        return _maxMB;
+    }
+	void SetmaxMB(long value)
+    {
+        _maxMB = value;
+    }
+private:
 	long _currentMB;
-	
+public:
+	long GetcurrentMB()
+    {
+        return _currentMB;
+    }
+	void SetcurrentMB(long value)
+    {
+        _currentMB = value;
+    }
 
+public:
 	class Members
 	{
     public:
@@ -105,11 +153,30 @@ public:
     {
     }
 
+private:
 	wstring _apiKey;
-	
+public:
+	wstring GetapiKey()
+    {
+        return _apiKey;
+    }
+	void SetapiKey(wstring value)
+    {
+        _apiKey = value;
+    }
+private:
 	wstring _envInfo;
-	
+public:
+	wstring GetenvInfo()
+    {
+        return _envInfo;
+    }
+	void SetenvInfo(wstring value)
+    {
+        _envInfo = value;
+    }
 
+public:
 	class Members
 	{
     public:
@@ -139,11 +206,30 @@ public:
     {
     }
 
+private:
 	CpuInfo _cpuUsage;
-	
+public:
+	CpuInfo GetcpuUsage()
+    {
+        return _cpuUsage;
+    }
+	void SetcpuUsage(CpuInfo value)
+    {
+        _cpuUsage = value;
+    }
+private:
 	MemoryInfo _memoryUsage;
-	
+public:
+	MemoryInfo GetmemoryUsage()
+    {
+        return _memoryUsage;
+    }
+	void SetmemoryUsage(MemoryInfo value)
+    {
+        _memoryUsage = value;
+    }
 
+public:
 	class Members
 	{
     public:

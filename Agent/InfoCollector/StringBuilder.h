@@ -21,3 +21,4 @@ protected:
     vector<wstring> m_vect;
 };
 
+string ws2s(const std::wstring& wstr);
