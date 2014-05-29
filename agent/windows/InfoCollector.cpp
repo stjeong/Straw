@@ -8,17 +8,10 @@
 #include <codecvt>
 
 #include "SystemInfo.h"
+#include "InfoCollector.h"
+#include "CommandLineParser.h"
 
 #pragma comment(lib, "ws2_32.lib")
-
-wstring GetApiKey();
-wstring GetUID();
-wstring GetComputerName();
-wstring GetEnvInfo();
-int GetIntervalTime();
-void ProcessInfo(wstring apiKey, SOCKET socketHandle, sockaddr_in remoteServAddr);
-
-void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder &sb);
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -30,38 +23,47 @@ int _tmain(int argc, _TCHAR* argv[])
     SOCKET udpSocket = INVALID_SOCKET;
 
     int result = IC_NOERROR;
+    bool showHelp = false;
 
     do
     {
-        // getting env info
         wstring apiKey;
         wstring envInfo;
         int intervalTime = 0;
         ConnectionInfo connection;
 
-        apiKey = GetApiKey();
-        envInfo = GetEnvInfo();
-        intervalTime = GetIntervalTime();
+        if (cmdOptionExists(argv, argv + argc, L"-h") == true
+            || cmdOptionExists(argv, argv + argc, L"/h") == true)
+        {
+            showHelp = true;
+            break;
+        }
+
+        apiKey = GetApiKey(argc, argv);
+        envInfo = GetEnvInfo(argc, argv);
+        intervalTime = GetIntervalTime(argc, argv);
 
         if (apiKey.length() == 0)
         {
-            printf("NO ApiKey");
+            OutputError(L"NO ApiKey\n");
             result = IC_NO_APIKEY;
+            showHelp = true;
             break;
         }
 
         if (envInfo.length() == 0)
         {
-            printf("NO AgentID Info");
+            OutputError(L"NO AgentID Info\n");
             result = IC_NO_AGENTIDINFO;
+            showHelp = true;
             break;
         }
 
-        string address = ws2s(connection.Getaddress());
+        string address = GetHostAddress(argc, argv, connection);
         struct hostent *host = gethostbyname(address.c_str());
         if (host == nullptr)
         {
-            printf("Can't resolve host address: %s", address.c_str());
+            OutputError(L"Can't resolve host address: %s\n", address.c_str());
             result = IC_NO_RESOLVE_HOSTADDR;
             break;
         }
@@ -80,12 +82,12 @@ int _tmain(int argc, _TCHAR* argv[])
 
         if (bind(udpSocket, (struct sockaddr *) &cliAddr, sizeof(cliAddr)) < 0)
         {
-            printf("%d: cannot bind port", connection.Getport());
+            OutputError(L"%d: cannot bind port\n", connection.Getport());
             result = IC_ERROR_SOCKETBIND;
             break;
         }
 
-        ProcessInfo(apiKey, udpSocket, remoteServAddr);
+        ProcessInfo(apiKey, envInfo, udpSocket, remoteServAddr);
 
     } while (false);
 
@@ -94,9 +96,29 @@ int _tmain(int argc, _TCHAR* argv[])
         closesocket(udpSocket);
     }
 
+    if (showHelp == true)
+    {
+        ShowHelp();
+    }
+
     WSACleanup();
 
     return result;
+}
+
+string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo connection)
+{
+    wstring txt;
+    if (cmdOptionExists(argv, argv + argc, L"-s") == true)
+    {
+        txt = getCmdOption(argv, argv + argc, L"-s");
+    }
+    else
+    {
+        txt = connection.Getaddress();
+    }
+    
+    return ws2s(txt);
 }
 
 void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder &sb)
@@ -115,26 +137,34 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
         sizeof(remoteServAddr));
 }
 
-wstring GetApiKey()
+wstring GetApiKey(int argc, _TCHAR* argv[])
 {
-    return L"f31fc79434df8e4b7f9fd1f5bebe5b111baf8571";
+    if (cmdOptionExists(argv, argv + argc, L"-key") == true)
+    {
+        return getCmdOption(argv, argv + argc, L"-key");
+    }
+
+    return L"";
 }
 
-wstring GetEnvInfo()
+wstring GetEnvInfo(int argc, _TCHAR* argv[])
 {
-    // try to get UID from registry
-    wstring uid = GetUID();
+    wstring uid = GetUID(argc, argv);
     if (uid.length() == 0)
     {
-        // if none, return ComputerName
         return GetComputerName();
     }
 
     return uid;
 }
 
-wstring GetUID()
+wstring GetUID(int argc, _TCHAR* argv[])
 {
+    if (cmdOptionExists(argv, argv + argc, L"-id") == true)
+    {
+        return getCmdOption(argv, argv + argc, L"-id");
+    }
+
     return L"";
 }
 
@@ -160,12 +190,18 @@ wstring GetComputerName()
     return txt;
 }
 
-int GetIntervalTime()
+int GetIntervalTime(int argc, _TCHAR* argv[])
 {
-    return 2;
+    wstring txt = L"2";
+    if (cmdOptionExists(argv, argv + argc, L"-d") == true)
+    {
+        txt = getCmdOption(argv, argv + argc, L"-d");
+    }
+
+    return ::_wtoi(txt.c_str());
 }
 
-void ProcessInfo(wstring apiKey, SOCKET socketHandle, sockaddr_in remoteServAddr)
+void ProcessInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr)
 {
     StringBuilder sb;
 
@@ -189,7 +225,7 @@ void ProcessInfo(wstring apiKey, SOCKET socketHandle, sockaddr_in remoteServAddr
                 sb.push_back(L"]");
 
                 wchar_t buf[40];
-                swprintf(buf, L"}, \"Total\": %.2f", totalUsage);
+                swprintf(buf, L"}, \"%s\": %.2f", CpuInfo::Members::Total.c_str(), totalUsage);
                 sb.push_back(buf);
             }
             sb.push_back(L"},");
@@ -215,7 +251,7 @@ void ProcessInfo(wstring apiKey, SOCKET socketHandle, sockaddr_in remoteServAddr
 
             sb.push_back(L"\"EnvInfo\":");
             sb.push_back(L"\"");
-            sb.push_back(GetEnvInfo());
+            sb.push_back(envKey);
             sb.push_back(L"\"");
         }
 
@@ -225,4 +261,32 @@ void ProcessInfo(wstring apiKey, SOCKET socketHandle, sockaddr_in remoteServAddr
         Sleep(1000);
     }
 
+}
+
+void ShowHelp()
+{
+#if defined(_WIN64)
+    int platformId = 64;
+#else
+    int platformId = 32;
+#endif
+    printf("ic%d.exe -h\n", platformId);
+    printf("ic%d.exe -key [apikey] -s [hostaddress] -id [agentid] -d [interval-sec]\n", platformId);
+    printf("samples:\n");
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 5\n", platformId);
+    printf("        data server: 192.168.0.5, apikey: 8CFDDE2478\n");
+    printf("        id: mypc100, every 5 seconds\n");
+}
+
+void OutputError(wstring txt, ...)
+{
+    va_list args;
+    const wchar_t *fmt = txt.c_str();
+    va_start(args, fmt);
+
+    wprintf(L"Error: ");
+    wprintf(txt.c_str(), args);
+    wprintf(L"\n");
+    
+    va_end(args);
 }
