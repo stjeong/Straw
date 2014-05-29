@@ -78,5 +78,5 @@ typedef enum _SYSTEMINFOCLASS
 } SYSTEMINFOCLASS, *PSYSTEMINFOCLASS;
 
 bool GetMemoryInfo(__int64 *maxMemory, __int64 *currentUsage);
-bool RetrieveCpuInfo(StringBuilder &sb);
+bool RetrieveCpuInfo(StringBuilder &sb, float *totalUsage);
 void IntializeSystemInfo();

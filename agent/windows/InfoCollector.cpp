@@ -103,6 +103,10 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 {
     wstring data = sb.ToString();
 
+#if defined(_DEBUG)
+    ::OutputDebugString((data + L"\n").c_str());
+#endif
+
     std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
     string utfData = myconv.to_bytes(data);;
 
@@ -174,14 +178,19 @@ void ProcessInfo(wstring apiKey, SOCKET socketHandle, sockaddr_in remoteServAddr
             sb.push_back(L"\"" + SystemInfo::Members::CpuUsage + L"\":");
             sb.push_back(L"{");
             {
+                float totalUsage = 0.0f;
                 sb.push_back(L"\"" + CpuInfo::Members::Unit + L"\":[");
-                if (RetrieveCpuInfo(sb) == false)
+                if (RetrieveCpuInfo(sb, &totalUsage) == false)
                 {
                     Sleep(1000);
                     continue;
                 }
 
                 sb.push_back(L"]");
+
+                wchar_t buf[40];
+                swprintf(buf, L"}, \"Total\": %.2f", totalUsage);
+                sb.push_back(buf);
             }
             sb.push_back(L"},");
 

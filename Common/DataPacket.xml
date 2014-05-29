@@ -28,6 +28,7 @@
         <properties>
             <!-- usage percent -->
             <property name="Unit" type="float" isCollection="true" />
+            <property name="Total" type="float" />
         </properties>
     </type>
 

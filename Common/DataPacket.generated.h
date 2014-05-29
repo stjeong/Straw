@@ -3,7 +3,7 @@
 #pragma once
 
 
-// 2014-05-29 오전 1:41:34
+// 2014-05-29 오후 11:17:20
 
 #include <string>
 #include <vector>
@@ -79,18 +79,31 @@ public:
     {
         _unit = value;
     }
+private:
+	float _total;
+public:
+	float Gettotal()
+    {
+        return _total;
+    }
+	void Settotal(float value)
+    {
+        _total = value;
+    }
 
 public:
 	class Members
 	{
     public:
 		static wstring Unit;
+		static wstring Total;
 	};
     
 	class SqlVarMembers
 	{
     public:
 		static wstring Unit;
+		static wstring Total;
 	};
 };
 

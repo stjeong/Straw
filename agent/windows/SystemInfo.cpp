@@ -11,6 +11,14 @@ int old_numberOfCpu;
 vector<LONGLONG> old_cpuTime;
 PROCNTQSI NtQuerySystemInformation;
 
+void IntializeSystemInfo()
+{
+    if (NtQuerySystemInformation == nullptr)
+    {
+        NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
+    }
+}
+
 bool GetMemoryInfo(__int64 *maxMemory, __int64 *currentUsage)
 {
     *maxMemory = 0;
@@ -32,16 +40,10 @@ bool GetMemoryInfo(__int64 *maxMemory, __int64 *currentUsage)
     return true;
 }
 
-void IntializeSystemInfo()
+bool RetrieveCpuInfo(StringBuilder &sb, float *totalUsage)
 {
-    if (NtQuerySystemInformation == nullptr)
-    {
-        NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
-    }
-}
+    *totalUsage = 0.0;
 
-bool RetrieveCpuInfo(StringBuilder &sb)
-{
     if (NtQuerySystemInformation == nullptr)
     {
         return false;
@@ -148,12 +150,14 @@ bool RetrieveCpuInfo(StringBuilder &sb)
             wchar_t buf[25];
             swprintf(buf, L"%.2f", (kernel + user));
             sb.push_back(buf);
-            sb.push_back(L",");
+
+            if (j != numberOfCpu - 1)
+            {
+                sb.push_back(L",");
+            }
         }
 
-        wchar_t buf[25];
-        swprintf(buf, L"%.2f", ((totalUsedGap * 100.0f) / totalCpuGap));
-        sb.push_back(buf);
+        *totalUsage = (totalUsedGap * 100.0f) / totalCpuGap;
 
     } while (false);
 

@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-29 오전 1:41:33
+// 2014-05-29 오후 11:17:20
 
 namespace Kerberos.Data
 {
@@ -144,6 +144,28 @@ namespace Kerberos.Data
     		}
     	}
     	
+    	float   _total
+        
+            ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public float  Total
+    	{
+    		get { return this._total; }
+    		
+    		set
+    		{
+    			if (this._total == value)
+    			{
+    				return;
+    			}
+    			
+    			this._total = value;
+    			OnPropertyChanged("Total"); 
+    		}
+    	}
+    	
     
     
     
@@ -165,11 +187,13 @@ namespace Kerberos.Data
     	public static  class Members
     	{
     		public const string Unit = "Unit";
+    		public const string Total = "Total";
     	}
         
     	public static  class SqlVarMembers
     	{
     		public const string Unit = "@Unit";
+    		public const string Total = "@Total";
     	}
     }
     

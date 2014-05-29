@@ -24,6 +24,8 @@ namespace PacketTest
             cpu.Unit.Add(0.0f);
             cpu.Unit.Add(0.0f);
             cpu.Unit.Add(0.0f);
+
+            cpu.Total = (float)(15.5 * 0.25);
             info.CpuUsage = cpu;
 
             MemoryInfo memoy = new MemoryInfo();

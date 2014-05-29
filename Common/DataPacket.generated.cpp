@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-29 오전 1:41:34
+// 2014-05-29 오후 11:17:20
 
 #include "stdafx.h"
 #include "DataPacket.generated.h"
@@ -18,8 +18,10 @@
 
 
 		wstring CpuInfo::Members::Unit = L"Unit";
+		wstring CpuInfo::Members::Total = L"Total";
     
 		wstring CpuInfo::SqlVarMembers::Unit = L"Unit";
+		wstring CpuInfo::SqlVarMembers::Total = L"Total";
 
 
 
