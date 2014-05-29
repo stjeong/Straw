@@ -15,6 +15,10 @@ using namespace std;
 
 #include "..\..\Common\DataPacket.generated.h"
 
-
-
-// TODO: reference additional headers your program requires here
+enum IC_RSEULT {
+    IC_NOERROR,
+    IC_NO_APIKEY,
+    IC_NO_AGENTIDINFO,
+    IC_ERROR_SOCKETBIND,
+    IC_NO_RESOLVE_HOSTADDR,
+};
