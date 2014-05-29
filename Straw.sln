@@ -3,33 +3,35 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Document", "Document", "{A965C956-5282-4264-A2AE-C1EF9D4E57A1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "document", "document", "{A965C956-5282-4264-A2AE-C1EF9D4E57A1}"
 	ProjectSection(SolutionItems) = preProject
 		Document\v1_req.pptx = Document\v1_req.pptx
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{F0F6A0C5-B930-4634-8258-58F99AD99B29}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{F0F6A0C5-B930-4634-8258-58F99AD99B29}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kerberos.Data", "Common\Kerberos.Data.csproj", "{7ECFDD08-767D-4084-8031-02F1AB62DFB4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{23846246-0F50-4147-A6C9-D2D387B81F2F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{23846246-0F50-4147-A6C9-D2D387B81F2F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacketTest", "Test\PacketTest\PacketTest.csproj", "{D283778D-9FDE-4A96-864A-C65965EDFD54}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{7EDD6D01-3359-4D15-9C18-8F7867ECFA9D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server", "server", "{7EDD6D01-3359-4D15-9C18-8F7867ECFA9D}"
 	ProjectSection(SolutionItems) = preProject
 		Server\README.md = Server\README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Agent", "Agent", "{0ADC3A72-89A1-4A57-B8EE-26377909A020}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InfoCollector", "Agent\InfoCollector\InfoCollector.vcxproj", "{A886C4FD-CEF9-4333-8C2E-C46F8E7B0B10}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "agent", "agent", "{0ADC3A72-89A1-4A57-B8EE-26377909A020}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2C6C8574-F39E-4AFD-B342-05C5B84F9E80}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "windows", "windows", "{63F1570E-0EB3-487E-92BE-68A3ABE1DCCF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InfoCollector", "agent\windows\InfoCollector.vcxproj", "{A886C4FD-CEF9-4333-8C2E-C46F8E7B0B10}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -78,6 +80,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7ECFDD08-767D-4084-8031-02F1AB62DFB4} = {F0F6A0C5-B930-4634-8258-58F99AD99B29}
 		{D283778D-9FDE-4A96-864A-C65965EDFD54} = {23846246-0F50-4147-A6C9-D2D387B81F2F}
-		{A886C4FD-CEF9-4333-8C2E-C46F8E7B0B10} = {0ADC3A72-89A1-4A57-B8EE-26377909A020}
+		{63F1570E-0EB3-487E-92BE-68A3ABE1DCCF} = {0ADC3A72-89A1-4A57-B8EE-26377909A020}
+		{A886C4FD-CEF9-4333-8C2E-C46F8E7B0B10} = {63F1570E-0EB3-487E-92BE-68A3ABE1DCCF}
 	EndGlobalSection
 EndGlobal
