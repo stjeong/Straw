@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
 public class RawDataUdpServerTest {
     @Test
@@ -11,8 +12,8 @@ public class RawDataUdpServerTest {
         DAO.clearGroup("TEST_G");
         RawDataUdpServer.processData("{\"CpuUsage\":{\"Total\": 3.87}, \"ApiKey\":\"TEST_G\"}", 10 * 1000);
         Thread.sleep(100);
-        List<Double> list = DAO.getRawsBetween("TEST_G", "my pc", 0, 100 * 1000);
-        Assert.assertEquals(3.87, (Double)list.get(0), 0);
+        Map<String, Map<Long, Double>> map = DAO.getRawsBetween("TEST_G", 0, 100 * 1000);
+        Assert.assertEquals(3.87, (Double)map.get("my pc").get(100*1000), 0);
     }
 
 }
