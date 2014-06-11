@@ -39,6 +39,9 @@
     <ClInclude Include="CommandLineParser.h">
       <Filter>lib</Filter>
     </ClInclude>
+    <ClInclude Include="StringSplit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -55,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="CommandLineParser.cpp">
       <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="StringSplit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Register.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
