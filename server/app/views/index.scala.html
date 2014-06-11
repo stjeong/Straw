@@ -1,6 +1,27 @@
 @(message: String)
-
 @main("Straw") {
-
-	@message
+    <div class="container">
+    <div>Time : <span id="time-div">Loading...</span></div>
+    <h3>group - ce3bd840-f0a7-11e3-ac10-0800200c9a66</h3>
+    <div id="member-list">Loading...</div>
+    </div>
+    <script>
+    setInterval(function(){
+        $.getJSON( "/recent", function(data) {
+            $("#time-div" ).html(new Date(data.lastBucketTime));
+            $("#member-list").empty();
+            $.each(data.list, function(k,v) {
+                $("#member-list" ).append("<h4>" + v.name + "</h4>");
+                $.each( v.cpu, function(i, v) {
+                    var s;
+                    if(v)
+                        s = Math.round(v*100) + "%" ;
+                    else
+                        s = "?";
+                    $("#member-list" ).append('<div class="col-md-1">' + s  + '</div>');
+                });
+            });
+        });
+    },1000);
+    </script>
 }
