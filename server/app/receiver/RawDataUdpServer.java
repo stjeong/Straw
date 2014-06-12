@@ -35,9 +35,10 @@ public class RawDataUdpServer {
 
     protected static void processData(String jsonString, long time) {
         JsonNode root = Json.parse(jsonString);
-        String groupKey = root.get("ApiKey").asText();
-        double cpu = root.get("CpuUsage").get("Total").asDouble();
-        DAO.insertRaw(groupKey, "my pc", time, cpu);
+        String groupKey = root.get("groupKey").asText();
+        double cpu = root.get("cpuUsage").get("total").asDouble();
+        String id = root.get("machineId").asText();
+        DAO.insertRaw(groupKey, id, time, cpu);
     }
 
 }
