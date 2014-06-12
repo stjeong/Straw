@@ -17,4 +17,10 @@ public class UTF8StringSendingUdpClient {
             clientSocket.close();
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        String jsonString = "{\"cpuUsage\":{\"total\": 0.37}, \"machineId\":\"java_agent_test\", \"groupKey\":\"" + "ce3bd840-f0a7-11e3-ac10-0800200c9a66" + "\"}";
+        UTF8StringSendingUdpClient.send("straw.imyoyo.net", 8282, jsonString);
+    }
+
 }
