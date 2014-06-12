@@ -11,6 +11,25 @@ int old_numberOfCpu;
 vector<LONGLONG> old_cpuTime;
 PROCNTQSI NtQuerySystemInformation;
 
+wstring GetEnvVar(wstring key)
+{
+    wchar_t envBuf[MAX_PATH];
+    DWORD dwLength = GetEnvironmentVariable(key.c_str(), envBuf, MAX_PATH);
+    if (dwLength == 0)
+    {
+        return L"";
+    }
+
+    return envBuf;
+}
+
+bool IsConsoleApp()
+{
+    wstring result = GetEnvVar(L"asNTService");
+
+    return result != L"1";
+}
+
 void IntializeSystemInfo()
 {
     if (NtQuerySystemInformation == nullptr)

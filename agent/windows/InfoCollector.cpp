@@ -1,11 +1,18 @@
 // InfoCollector.cpp : Defines the entry point for the console application.
 
 #include "stdafx.h"
+
 #include "StringBuilder.h"
+#include "StringSplit.h"
 
 #include <Windows.h>
 #include <WinBase.h>
 #include <codecvt>
+
+#include <thread>
+#include <ppl.h>
+
+#include <strsafe.h>
 
 #include "SystemInfo.h"
 #include "InfoCollector.h"
@@ -13,112 +20,71 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+// ic32.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 3,7 -regservice
+
+int g_argc;
+_TCHAR** g_argv;
+
+SERVICE_STATUS_HANDLE g_serviceStatusHandle = NULL;
+BOOL g_serviceRunning = FALSE;
+BOOL g_servicePaused = FALSE;
+HANDLE g_killServiceEvent = NULL;
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-    IntializeSystemInfo();
+    bool isConsoleApp = IsConsoleApp();
 
-    WORD wVersionRequested = MAKEWORD(1, 1);
-    WSADATA wsaData;
-    WSAStartup(wVersionRequested, &wsaData);
-    SOCKET udpSocket = INVALID_SOCKET;
+    g_argc = argc;
+    g_argv = argv;
 
-    int result = IC_NOERROR;
-    bool showHelp = false;
-
-    do
+    if (isConsoleApp == true)
     {
-        wstring apiKey;
-        wstring envInfo;
-        int intervalTime = 0;
-        ConnectionInfo connection;
-
-        if (cmdOptionExists(argv, argv + argc, L"-h") == true
-            || cmdOptionExists(argv, argv + argc, L"/h") == true)
-        {
-            showHelp = true;
-            break;
-        }
-
-        apiKey = GetApiKey(argc, argv);
-        envInfo = GetEnvInfo(argc, argv);
-        intervalTime = GetIntervalTime(argc, argv);
-
-        if (apiKey.length() == 0)
-        {
-            OutputError(L"NO ApiKey\n");
-            result = IC_NO_APIKEY;
-            showHelp = true;
-            break;
-        }
-
-        if (envInfo.length() == 0)
-        {
-            OutputError(L"NO AgentID Info\n");
-            result = IC_NO_AGENTIDINFO;
-            showHelp = true;
-            break;
-        }
-
-        string address = GetHostAddress(argc, argv, connection);
-        struct hostent *host = gethostbyname(address.c_str());
-        if (host == nullptr)
-        {
-            OutputError(L"Can't resolve host address: %s\n", address.c_str());
-            result = IC_NO_RESOLVE_HOSTADDR;
-            break;
-        }
-
-        struct sockaddr_in cliAddr, remoteServAddr;
-
-        remoteServAddr.sin_family = host->h_addrtype;
-        memcpy((char *)&remoteServAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-        remoteServAddr.sin_port = htons((u_short)connection.Getport());
-
-        /* socket creation */
-        SOCKET udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
-        cliAddr.sin_family = AF_INET;
-        cliAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        cliAddr.sin_port = htons(0);
-
-        if (bind(udpSocket, (struct sockaddr *) &cliAddr, sizeof(cliAddr)) < 0)
-        {
-            OutputError(L"%d: cannot bind port\n", connection.Getport());
-            result = IC_ERROR_SOCKETBIND;
-            break;
-        }
-
-        ProcessInfo(apiKey, envInfo, udpSocket, remoteServAddr);
-
-    } while (false);
-
-    if (udpSocket != INVALID_SOCKET)
-    {
-        closesocket(udpSocket);
+        return ServiceExecutionThread(NULL);
     }
-
-    if (showHelp == true)
+    else
     {
-        ShowHelp();
+        SERVICE_TABLE_ENTRY serviceTable[] =
+        {
+            { SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain },
+            { NULL, NULL }
+        };
+
+        BOOL success;
+        // Register the service with the Service Control Manager
+        success = StartServiceCtrlDispatcher(serviceTable);
+        if (!success)
+        {
+            // This error message would not show up unless we had the "allow service to
+            // interact with desktop" option checked, which is unlikely for a console mode
+            // app, but we'll print an error message anyway just in case there's someone
+            // around to see it.
+            OutputError(L"StartServiceCtrlDispatcher fails! (%d)", GetLastError());
+        }
     }
-
-    WSACleanup();
-
-    return result;
 }
 
 string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo connection)
 {
     wstring txt;
-    if (cmdOptionExists(argv, argv + argc, L"-s") == true)
+
+    if (IsConsoleApp() == false)
     {
-        txt = getCmdOption(argv, argv + argc, L"-s");
+        txt = GetEnvVar(L"server");
+        return ws2s(txt);
     }
     else
     {
-        txt = connection.Getaddress();
-    }
+        if (cmdOptionExists(argv, argv + argc, L"-s") == true)
+        {
+            txt = getCmdOption(argv, argv + argc, L"-s");
+        }
+        else
+        {
+            txt = connection.Getaddress();
+        }
     
-    return ws2s(txt);
+        return ws2s(txt);
+    }
 }
 
 void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder &sb)
@@ -139,6 +105,11 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 
 wstring GetApiKey(int argc, _TCHAR* argv[])
 {
+    if (IsConsoleApp() == false)
+    {
+        return GetEnvVar(L"apiKey");
+    }
+
     if (cmdOptionExists(argv, argv + argc, L"-key") == true)
     {
         return getCmdOption(argv, argv + argc, L"-key");
@@ -149,6 +120,15 @@ wstring GetApiKey(int argc, _TCHAR* argv[])
 
 wstring GetEnvInfo(int argc, _TCHAR* argv[])
 {
+    if (IsConsoleApp() == false)
+    {
+        wstring result = GetEnvVar(L"envKey");
+        if (result.length() != 0)
+        {
+            return result;
+        }
+    }
+
     wstring uid = GetUID(argc, argv);
     if (uid.length() == 0)
     {
@@ -190,75 +170,120 @@ wstring GetComputerName()
     return txt;
 }
 
-int GetIntervalTime(int argc, _TCHAR* argv[])
+vector<int> GetIntervalTime(int argc, _TCHAR* argv[])
 {
-    wstring txt = L"2";
+    wstring txt = L"2,5";
+
     if (cmdOptionExists(argv, argv + argc, L"-d") == true)
     {
         txt = getCmdOption(argv, argv + argc, L"-d");
     }
 
-    return ::_wtoi(txt.c_str());
+    StringSplit split;
+    split.SplitString(txt, L",");
+    vector<int> intervalTimes;
+
+    for (int i = 0; i < split.GetCount(); i ++)
+    {
+        int interval = ::_wtoi(txt.c_str());
+        intervalTimes.push_back(interval);
+    }
+
+    if (intervalTimes.size() < 2)
+    {
+        intervalTimes.push_back(5);
+    }
+
+    return intervalTimes;
 }
 
-void ProcessInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr)
+void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval)
 {
     StringBuilder sb;
+    bool isConsoleApp = IsConsoleApp();
+
+    int sleepTime = interval * 1000;
 
     while (true)
     {
-        sb.clear();
-
-        sb.push_back(L"{");
+        if (g_servicePaused == FALSE)
         {
-            sb.push_back(L"\"" + SystemInfo::Members::CpuUsage + L"\":");
+            sb.clear();
+
             sb.push_back(L"{");
             {
-                float totalUsage = 0.0f;
-                sb.push_back(L"\"" + CpuInfo::Members::Unit + L"\":[");
-                if (RetrieveCpuInfo(sb, &totalUsage) == false)
+                sb.push_back(L"\"" + SystemInfo::Members::CpuUsage + L"\":");
+                sb.push_back(L"{");
                 {
-                    Sleep(1000);
-                    continue;
+                    float totalUsage = 0.0f;
+                    sb.push_back(L"\"" + CpuInfo::Members::Unit + L"\":[");
+                    if (RetrieveCpuInfo(sb, &totalUsage) == false)
+                    {
+                        Sleep(1000);
+                        continue;
+                    }
+
+                    sb.push_back(L"]");
+
+                    wchar_t buf[40];
+                    swprintf(buf, L"}, \"%s\": %.2f", CpuInfo::Members::Total.c_str(), totalUsage);
+                    sb.push_back(buf);
+                }
+                sb.push_back(L"},");
+
+                __int64 maxMemory;
+                __int64 currentUsage;
+                GetMemoryInfo(&maxMemory, &currentUsage);
+
+                sb.push_back(L"\"" + SystemInfo::Members::MemoryUsage + L"\":");
+                {
+                    sb.push_back(L"{\"" + MemoryInfo::Members::MaxMB + L"\":");
+                    sb.push_back(maxMemory);
+
+                    sb.push_back(L", \"" + MemoryInfo::Members::CurrentMB + L"\":");
+                    sb.push_back(currentUsage);
+                    sb.push_back(L"},");
                 }
 
-                sb.push_back(L"]");
+                sb.push_back(L"\"" + PacketBase::Members::ApiKey + L"\":");
+                sb.push_back(L"\"");
+                sb.push_back(apiKey);
+                sb.push_back(L"\",");
 
-                wchar_t buf[40];
-                swprintf(buf, L"}, \"%s\": %.2f", CpuInfo::Members::Total.c_str(), totalUsage);
-                sb.push_back(buf);
+                sb.push_back(L"\"EnvInfo\":");
+                sb.push_back(L"\"");
+                sb.push_back(envKey);
+                sb.push_back(L"\"");
             }
-            sb.push_back(L"},");
 
-            __int64 maxMemory;
-            __int64 currentUsage;
-            GetMemoryInfo(&maxMemory, &currentUsage);
+            sb.push_back(L"}");
 
-            sb.push_back(L"\"" + SystemInfo::Members::MemoryUsage + L"\":");
+            SendToServer(socketHandle, remoteServAddr, sb);
+
+            if (isConsoleApp == true)
             {
-                sb.push_back(L"{\"" + MemoryInfo::Members::MaxMB + L"\":");
-                sb.push_back(maxMemory);
-
-                sb.push_back(L", \"" + MemoryInfo::Members::CurrentMB + L"\":");
-                sb.push_back(currentUsage);
-                sb.push_back(L"},");
+                printf(".");
             }
-
-            sb.push_back(L"\"" + PacketBase::Members::ApiKey + L"\":");
-            sb.push_back(L"\"");
-            sb.push_back(apiKey);
-            sb.push_back(L"\",");
-
-            sb.push_back(L"\"EnvInfo\":");
-            sb.push_back(L"\"");
-            sb.push_back(envKey);
-            sb.push_back(L"\"");
         }
 
-        sb.push_back(L"}");
+        Sleep(sleepTime);
+    }
+}
 
-        SendToServer(socketHandle, remoteServAddr, sb);
-        Sleep(1000);
+void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval)
+{
+    StringBuilder sb;
+
+    int sleepTime = interval * 1000;
+
+    while (true)
+    {
+        if (g_servicePaused == FALSE)
+        {
+            sb.clear();
+        }
+
+        Sleep(sleepTime);
     }
 
 }
@@ -271,11 +296,44 @@ void ShowHelp()
     int platformId = 32;
 #endif
     printf("ic%d.exe -h\n", platformId);
-    printf("ic%d.exe -key [apikey] -s [hostaddress] -id [agentid] -d [interval-sec]\n", platformId);
+    printf("ic%d.exe -key [apikey] -s [hostaddress] -id [agentid] -d [interval-sec,[...]]\n", platformId);
+    printf("\n");
     printf("samples:\n");
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5\n", platformId);
+    printf("        apikey: 8CFDDE2478\n");
+    printf("        data server: 192.168.0.5\n");
+    printf("        (optional: agent id by default - machine name)\n");
+    printf("        (optional: interval time by default)\n");
+    printf("\n");
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100\n", platformId);
+    printf("        apikey: 8CFDDE2478\n");
+    printf("        data server: 192.168.0.5\n");
+    printf("        id: mypc100\n");
+    printf("        (optional: interval time by default)\n");
+    printf("\n");
     printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 5\n", platformId);
-    printf("        data server: 192.168.0.5, apikey: 8CFDDE2478\n");
-    printf("        id: mypc100, every 5 seconds\n");
+    printf("        apikey: 8CFDDE2478\n");
+    printf("        data server: 192.168.0.5\n");
+    printf("        id: mypc100\n");
+    printf("        every 5 seconds (default: 2sec)\n");
+    printf("\n");
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 3,7\n", platformId);
+    printf("        apikey: 8CFDDE2478\n");
+    printf("        data server: 192.168.0.5\n");
+    printf("        id: mypc100\n");
+    printf("        send cpu/mem info every 3 seconds (default: 2sec)\n");
+    printf("        send disk info every 7 seconds (default: 5sec)\n");
+    printf("\n");
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 3,7 -regservice\n", platformId);
+    printf("        Register as NT Service with this info,\n");
+    printf("            apikey: 8CFDDE2478\n");
+    printf("            data server: 192.168.0.5\n");
+    printf("            id: mypc100\n");
+    printf("            send cpu/mem info every 3 seconds (default: 2sec)\n");
+    printf("            send disk info every 7 seconds (default: 5sec)\n");
+    printf("\n");
+    printf("    ic%d.exe -unreg\n", platformId);
+    printf("        Unregister NT Service\n");
 }
 
 void OutputError(wstring txt, ...)
@@ -289,4 +347,389 @@ void OutputError(wstring txt, ...)
     wprintf(L"\n");
     
     va_end(args);
+
+#if _DEBUG
+    ::OutputDebugString(txt.c_str());
+#endif
+}
+
+//   ServiceMain -
+//   ServiceMain is called when the Service Control Manager wants to
+// launch the service.  It should not return until the service has
+// stopped. To accomplish this, for this example, it waits blocking
+// on an event just before the end of the function.  That event gets
+// set by the function which terminates the service above.  Also, if
+// there is an error starting the service, ServiceMain returns immediately
+// without launching the main service thread, terminating the service.
+VOID ServiceMain(DWORD argc, LPTSTR *argv)
+{
+#if _DEBUG
+    ::OutputDebugString(L"ServiceMain started.\n");
+#endif
+
+    BOOL success;
+    // First we must call the Registration function
+    g_serviceStatusHandle = RegisterServiceCtrlHandler(SERVICE_NAME,
+        (LPHANDLER_FUNCTION)ServiceCtrlHandler);
+
+    if (!g_serviceStatusHandle)
+    {
+        OutputError(L"RegisterServiceCtrlHandler fails! (%d)", GetLastError());
+        return;
+    }
+
+    do
+    {
+        // Next Notify the Service Control Manager of progress
+        success = UpdateSCMStatus(SERVICE_START_PENDING, NO_ERROR, 0, 1, 5000);
+        if (!success)
+        {
+            OutputError(L"1. UpdateSCMStatus fails! (%d)", GetLastError());
+            break;
+        }
+
+        // Now create the our service termination event to block on
+        g_killServiceEvent = CreateEvent(0, TRUE, FALSE, 0);
+        if (!g_killServiceEvent)
+        {
+            OutputError(L"CreateEvent fails! (%d)", GetLastError());
+            break;
+        }
+
+        // Notify the SCM of progress again
+        success = UpdateSCMStatus(SERVICE_START_PENDING, NO_ERROR, 0, 2, 1000);
+        if (!success)
+        {
+            OutputError(L"2. UpdateSCMStatus fails! (%d)", GetLastError());
+            break;
+        }
+
+        // Notify the SCM of progress again...
+        success = UpdateSCMStatus(SERVICE_START_PENDING, NO_ERROR, 0, 3, 5000);
+        if (!success)
+        {
+            OutputError(L"3. UpdateSCMStatus fails! (%d)", GetLastError());
+            break;
+        }
+
+        // Start the service execution thread by calling our StartServiceThread function...
+        success = StartServiceThread();
+        if (!success)
+        {
+            OutputError(L"StartServiceThread fails! (%d)", GetLastError());
+            break;
+        }
+
+        // The service is now running.  Notify the SCM of this fact.
+        success = UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0, 0, 0);
+        if (!success)
+        {
+            OutputError(L"4. UpdateSCMStatus fails! (%d)", GetLastError());
+            break;
+        }
+
+#if _DEBUG
+        ::OutputDebugString(L"WaitForSingleObject - started.\n");
+#endif
+
+        // Now just wait for our killed service signal, and then exit, which
+        // terminates the service!
+        WaitForSingleObject(g_killServiceEvent, INFINITE);
+
+#if _DEBUG
+        ::OutputDebugString(L"WaitForSingleObject - end.\n");
+#endif
+    } while (false);
+}
+
+//   Handles the events dispatched by the Service Control Manager.
+VOID ServiceCtrlHandler(DWORD controlCode)
+{
+    BOOL success;
+    DWORD serviceCurrentStatus = 0;
+
+    switch (controlCode)
+    {
+        // There is no START option because
+        // ServiceMain gets called on a start
+        // Pause the service
+    case SERVICE_CONTROL_PAUSE:
+        if (g_serviceRunning && !g_servicePaused)
+        {
+            // Tell the SCM we're about to Pause.
+            success = UpdateSCMStatus(SERVICE_PAUSE_PENDING, NO_ERROR, 0, 1, 1000);
+            g_servicePaused = TRUE;
+            serviceCurrentStatus = SERVICE_PAUSED;
+        }
+        break;
+
+        // Resume from a pause
+    case SERVICE_CONTROL_CONTINUE:
+        if (g_serviceRunning && g_servicePaused)
+        {
+            // Tell the SCM we're about to Resume.
+            success = UpdateSCMStatus(SERVICE_CONTINUE_PENDING, NO_ERROR, 0, 1, 1000);
+            g_servicePaused = FALSE;
+            serviceCurrentStatus = SERVICE_RUNNING;
+        }
+        break;
+        // Update the current status for the SCM.
+
+    case SERVICE_CONTROL_INTERROGATE:
+        // This does nothing, here we will just fall through to the end
+        // and send our current status.
+        break;
+
+        // For a shutdown, we can do cleanup but it must take place quickly
+        // because the system will go down out from under us.
+        // For this app we have time to stop here, which I do by just falling
+        // through to the stop message.
+    case SERVICE_CONTROL_SHUTDOWN:
+        // Stop the service
+    case SERVICE_CONTROL_STOP:
+        // Tell the SCM we're about to Stop.
+        serviceCurrentStatus = SERVICE_STOP_PENDING;
+        success = UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 1, 5000);
+        KillService();
+        return;
+
+    default:
+        break;
+    }
+
+    UpdateSCMStatus(serviceCurrentStatus, NO_ERROR, 0, 0, 0);
+}
+
+// This function updates the service status for the SCM
+BOOL UpdateSCMStatus(DWORD dwCurrentState,
+    DWORD dwWin32ExitCode,
+    DWORD dwServiceSpecificExitCode,
+    DWORD dwCheckPoint,
+    DWORD dwWaitHint)
+{
+    BOOL success;
+    SERVICE_STATUS serviceStatus;
+    // Fill in all of the SERVICE_STATUS fields
+    serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+    serviceStatus.dwCurrentState = dwCurrentState;
+    // If in the process of something, then accept
+    // no control events, else accept anything
+    if (dwCurrentState == SERVICE_START_PENDING)
+    {
+        serviceStatus.dwControlsAccepted = 0;
+    }
+    else
+    {
+        serviceStatus.dwControlsAccepted =
+            SERVICE_ACCEPT_STOP |
+            SERVICE_ACCEPT_PAUSE_CONTINUE |
+            SERVICE_ACCEPT_SHUTDOWN;
+    }
+    // if a specific exit code is defines, set up
+    // the Win32 exit code properly
+    if (dwServiceSpecificExitCode == 0)
+    {
+        serviceStatus.dwWin32ExitCode = dwWin32ExitCode;
+    }
+    else
+    {
+        serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+    }
+    serviceStatus.dwServiceSpecificExitCode = dwServiceSpecificExitCode;
+    serviceStatus.dwCheckPoint = dwCheckPoint;
+    serviceStatus.dwWaitHint = dwWaitHint;
+    // Pass the status record to the SCM
+    success = SetServiceStatus(g_serviceStatusHandle, &serviceStatus);
+    if (!success)
+    {
+        KillService();
+    }
+
+    return success;
+}
+
+void KillService()
+{
+    g_serviceRunning = FALSE;
+    // Set the event that is blocking ServiceMain
+    // so that ServiceMain can return
+    SetEvent(g_killServiceEvent);
+}
+
+// ServiceExecutionThread -
+//   This is the main thread of execution for the
+// service while it is running.
+DWORD ServiceExecutionThread(LPDWORD param)
+{
+#if _DEBUG
+    ::OutputDebugString(L"ServiceExecutionThread\n");
+#endif
+
+    IntializeSystemInfo();
+
+    bool isConsoleApp = IsConsoleApp();
+
+    WORD wVersionRequested = MAKEWORD(1, 1);
+    WSADATA wsaData;
+    WSAStartup(wVersionRequested, &wsaData);
+    SOCKET udpSocket = INVALID_SOCKET;
+
+    int result = IC_NOERROR;
+    bool showHelp = false;
+
+    do
+    {
+        wstring apiKey;
+        wstring envInfo;
+        vector<int> intervalTimes;
+        ConnectionInfo connection;
+
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-h") == true
+            || cmdOptionExists(g_argv, g_argv + g_argc, L"/h") == true)
+        {
+            showHelp = true;
+            break;
+        }
+
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-unreg") == true)
+        {
+            DoUnregistration();
+            break;
+        }
+
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-start") == true)
+        {
+            DoStartService();
+            break;
+        }
+
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-stop") == true)
+        {
+            DoStopService();
+            break;
+        }
+
+        apiKey = GetApiKey(g_argc, g_argv);
+        envInfo = GetEnvInfo(g_argc, g_argv);
+        intervalTimes = GetIntervalTime(g_argc, g_argv);
+
+        if (apiKey.length() == 0)
+        {
+            OutputError(L"NO ApiKey\n");
+            result = IC_NO_APIKEY;
+            showHelp = true;
+            break;
+        }
+
+        if (envInfo.length() == 0)
+        {
+            OutputError(L"NO AgentID Info\n");
+            result = IC_NO_AGENTIDINFO;
+            showHelp = true;
+            break;
+        }
+
+        string address = GetHostAddress(g_argc, g_argv, connection);
+        struct hostent *host = gethostbyname(address.c_str());
+        if (host == nullptr)
+        {
+            OutputError(L"Can't resolve host address: %s\n", address.c_str());
+            result = IC_NO_RESOLVE_HOSTADDR;
+            break;
+        }
+
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-regservice") == true)
+        {
+            DoRegistration(apiKey, envInfo, address, intervalTimes);
+            break;
+        }
+
+        struct sockaddr_in cliAddr, remoteServAddr;
+
+        remoteServAddr.sin_family = host->h_addrtype;
+        memcpy((char *)&remoteServAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+        remoteServAddr.sin_port = htons((u_short)connection.Getport());
+
+        /* socket creation */
+        SOCKET udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
+        cliAddr.sin_family = AF_INET;
+        cliAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        cliAddr.sin_port = htons(0);
+
+        if (::bind(udpSocket, (struct sockaddr *) &cliAddr, sizeof(cliAddr)) < 0)
+        {
+            OutputError(L"%d: cannot bind port\n", connection.Getport());
+            result = IC_ERROR_SOCKETBIND;
+            break;
+        }
+
+#if _DEBUG
+        ::OutputDebugString(L"ServiceExecutionThread - data collect thread - start\n");
+#endif
+
+        thread processCpuMemThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
+        {
+            ProcessCpuMemInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[0]);
+        });
+
+        thread processDiskThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
+        {
+            ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
+        });
+
+        if (isConsoleApp == true)
+        {
+            printf("Press any key to exit...\n");
+            getchar();
+        }
+        else
+        {
+            WaitForSingleObject(g_killServiceEvent, INFINITE);
+        }
+
+        processCpuMemThread.detach();
+        processDiskThread.detach();
+
+    } while (false);
+
+#if _DEBUG
+    ::OutputDebugString(L"ServiceExecutionThread - data collect thread - end\n");
+#endif
+
+    if (udpSocket != INVALID_SOCKET)
+    {
+        closesocket(udpSocket);
+    }
+
+    if (showHelp == true)
+    {
+        ShowHelp();
+    }
+
+    WSACleanup();
+
+    return result;
+}
+
+// StartService -
+//   This starts the service by creating its execution thread.
+BOOL StartServiceThread()
+{
+    DWORD id;
+
+    // Start the service's thread
+    HANDLE threadHandle = CreateThread(0, 0,
+        (LPTHREAD_START_ROUTINE)ServiceExecutionThread, 0, 0, &id);
+
+    if (threadHandle == 0)
+    {
+        return FALSE;
+    }
+    else
+    {
+        g_serviceRunning = TRUE;
+
+        ::CloseHandle(threadHandle);
+        return TRUE;
+    }
 }

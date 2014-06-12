@@ -22,3 +22,7 @@ enum IC_RSEULT {
     IC_ERROR_SOCKETBIND,
     IC_NO_RESOLVE_HOSTADDR,
 };
+
+#define SERVICE_NAME L"StrawAgent"
+#define REG_SERVICE L"SYSTEM\\CurrentControlSet\\Services\\" ##SERVICE_NAME
+
