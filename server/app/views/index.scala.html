@@ -1,27 +1,34 @@
 @(message: String)
 @main("Straw") {
     <div class="container">
-    <div>Time : <span id="time-div">Loading...</span></div>
-    <h3>group - ce3bd840-f0a7-11e3-ac10-0800200c9a66</h3>
-    <div id="member-list">Loading...</div>
-    </div>
-    <script>
-    setInterval(function(){
-        $.getJSON( "/recent", function(data) {
-            $("#time-div" ).html(new Date(data.lastBucketTime));
-            $("#member-list").empty();
-            $.each(data.list, function(k,v) {
-                $("#member-list" ).append("<h4>" + v.name + "</h4>");
-                $.each( v.cpu, function(i, v) {
-                    var s;
-                    if(v)
-                        s = Math.round(v*100) + "%" ;
-                    else
-                        s = "?";
-                    $("#member-list" ).append('<div class="col-md-1">' + s  + '</div>');
+    <p>Time: <span id="time-div">Loading...</span></p>
+    <div class="panel panel-default">
+        <div class="panel-heading">Group: ce3bd840-f0a7-11e3-ac10-0800200c9a66</div>
+        <div id="member-list" class="panel-body">Loading...</div>
+        </div>
+        <script>
+        setInterval(function(){
+            $.getJSON( "/recent", function(data) {
+                $("#time-div" ).html(new Date(data.lastBucketTime));
+                var memberDiv = $("#member-list" );
+                memberDiv.empty();
+                $.each(data.list, function(k,v) {
+                    memberDiv.append("<p><strong>Machine: " + v.name + "</strong></p>");
+                    var table = '<table><tr>';
+                    $.each(v.cpu, function(i, v) {
+                        var s;
+                        if(v)
+                            s = Math.round(v*100);
+                        else
+                            s = "?";
+                        table += '<td valign="bottom" style="height:32mm;padding:0.5mm"><table><tr><td valign="top" style="text-align:center;color:white;background-color:#555555;width:5mm;height:' + (v*30) + 'mm;"><small>' + s + '</small></td></tr></table></td>';
+                    });
+                    table += "</tr></table>";
+                    memberDiv.append(table);
+                    memberDiv.append("<p></p>");
                 });
             });
-        });
-    },1000);
-    </script>
+        },1000);
+        </script>
+    </div>
 }
