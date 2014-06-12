@@ -25,12 +25,10 @@
 int g_argc;
 _TCHAR** g_argv;
 
-SERVICE_STATUS_HANDLE g_serviceStatusHandle;
+SERVICE_STATUS_HANDLE g_serviceStatusHandle = NULL;
 BOOL g_serviceRunning = FALSE;
 BOOL g_servicePaused = FALSE;
 HANDLE g_killServiceEvent = NULL;
-DWORD g_serviceCurrentStatus = 0;
-HANDLE g_threadHandle = NULL;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -423,7 +421,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
         }
 
         // The service is now running.  Notify the SCM of this fact.
-        g_serviceCurrentStatus = SERVICE_RUNNING;
         success = UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0, 0, 0);
         if (!success)
         {
@@ -449,6 +446,8 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
 VOID ServiceCtrlHandler(DWORD controlCode)
 {
     BOOL success;
+    DWORD serviceCurrentStatus = 0;
+
     switch (controlCode)
     {
         // There is no START option because
@@ -460,9 +459,10 @@ VOID ServiceCtrlHandler(DWORD controlCode)
             // Tell the SCM we're about to Pause.
             success = UpdateSCMStatus(SERVICE_PAUSE_PENDING, NO_ERROR, 0, 1, 1000);
             g_servicePaused = TRUE;
-            g_serviceCurrentStatus = SERVICE_PAUSED;
+            serviceCurrentStatus = SERVICE_PAUSED;
         }
         break;
+
         // Resume from a pause
     case SERVICE_CONTROL_CONTINUE:
         if (g_serviceRunning && g_servicePaused)
@@ -470,14 +470,16 @@ VOID ServiceCtrlHandler(DWORD controlCode)
             // Tell the SCM we're about to Resume.
             success = UpdateSCMStatus(SERVICE_CONTINUE_PENDING, NO_ERROR, 0, 1, 1000);
             g_servicePaused = FALSE;
-            g_serviceCurrentStatus = SERVICE_RUNNING;
+            serviceCurrentStatus = SERVICE_RUNNING;
         }
         break;
         // Update the current status for the SCM.
+
     case SERVICE_CONTROL_INTERROGATE:
         // This does nothing, here we will just fall through to the end
         // and send our current status.
         break;
+
         // For a shutdown, we can do cleanup but it must take place quickly
         // because the system will go down out from under us.
         // For this app we have time to stop here, which I do by just falling
@@ -486,15 +488,16 @@ VOID ServiceCtrlHandler(DWORD controlCode)
         // Stop the service
     case SERVICE_CONTROL_STOP:
         // Tell the SCM we're about to Stop.
-        g_serviceCurrentStatus = SERVICE_STOP_PENDING;
+        serviceCurrentStatus = SERVICE_STOP_PENDING;
         success = UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 1, 5000);
         KillService();
         return;
+
     default:
         break;
     }
 
-    UpdateSCMStatus(g_serviceCurrentStatus, NO_ERROR, 0, 0, 0);
+    UpdateSCMStatus(serviceCurrentStatus, NO_ERROR, 0, 0, 0);
 }
 
 // This function updates the service status for the SCM
@@ -713,17 +716,20 @@ DWORD ServiceExecutionThread(LPDWORD param)
 BOOL StartServiceThread()
 {
     DWORD id;
+
     // Start the service's thread
-    g_threadHandle = CreateThread(0, 0,
+    HANDLE threadHandle = CreateThread(0, 0,
         (LPTHREAD_START_ROUTINE)ServiceExecutionThread, 0, 0, &id);
 
-    if (g_threadHandle == 0)
+    if (threadHandle == 0)
     {
         return FALSE;
     }
     else
     {
         g_serviceRunning = TRUE;
+
+        ::CloseHandle(threadHandle);
         return TRUE;
     }
 }
