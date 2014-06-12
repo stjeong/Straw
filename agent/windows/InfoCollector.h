@@ -22,3 +22,15 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
 void DoUnregistration();
 void DoStartService();
 BOOL DoStopService();
+
+VOID ServiceMain(DWORD argc, LPTSTR *argv);
+VOID ServiceCtrlHandler(DWORD controlCode);
+BOOL UpdateSCMStatus(DWORD dwCurrentState,
+    DWORD dwWin32ExitCode,
+    DWORD dwServiceSpecificExitCode,
+    DWORD dwCheckPoint,
+    DWORD dwWaitHint);
+void KillService();
+
+DWORD ServiceExecutionThread(LPDWORD param);
+BOOL StartServiceThread();

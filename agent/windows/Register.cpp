@@ -11,8 +11,6 @@
 
 #include "InfoCollector.h"
 
-#define SERVICE_NAME L"StrawAgent"
-
 void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vector<int> intervalTimes)
 {
     printf("Installing Service...\n");
@@ -61,7 +59,7 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
         sb.push_back(L"envKey=" + envKey);
         sb.push_back("server=" + remoteServAddr);
 
-        if (RegOpenKey(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Services\\StrawAgent", &hkey) != ERROR_SUCCESS)
+        if (RegOpenKey(HKEY_LOCAL_MACHINE, REG_SERVICE, &hkey) != ERROR_SUCCESS)
         {
             printf("RegOpenKey fails! (%d)\n", GetLastError());
             break;
@@ -202,6 +200,8 @@ void DoStartService()
             printf("StartService fails! (%d)\n", GetLastError());
             break;
         }
+
+        printf("Service started successfully!\n");
 
     } while (false);
 
