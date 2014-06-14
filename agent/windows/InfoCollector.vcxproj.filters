@@ -16,6 +16,12 @@
     <Filter Include="lib">
       <UniqueIdentifier>{d51920d5-daa6-43eb-97e9-434a9a04d2c7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="deploy">
+      <UniqueIdentifier>{e3069716-4625-4e1b-b15f-6d4316d656d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deploy\1.0.0.1">
+      <UniqueIdentifier>{a1ce3f37-e0fb-4efc-a28f-b0d71f63bea7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -76,5 +82,10 @@
     <ResourceCompile Include="Resource.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="deploy\1.0.0.1\ic32.exe">
+      <Filter>deploy\1.0.0.1</Filter>
+    </None>
   </ItemGroup>
 </Project>

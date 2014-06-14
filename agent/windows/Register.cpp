@@ -389,24 +389,26 @@ BOOL DoStopService()
 }
 
 #import <winhttp.dll> no_namespace, named_guids  
+#include <msxml.h>
 
-void ProcessLatestUpdate()
+void ProcessLatestUpdate(bool isConsoleApp)
 {
     WORD MajorVersion = 0;
     WORD MinorVersion = 0;
     WORD BuildNumber = 0;
     WORD RevisionNumber = 0;
 
-    TCHAR buf[4096];
-    GetModuleFileName(NULL, buf, 4096);
+    wchar_t thisFileName[4096];
+    wchar_t oldVersion[60];
+    GetModuleFileName(NULL, thisFileName, 4096);
 
-    GetAppVersion(buf,
+    GetAppVersion(thisFileName,
         &MajorVersion,
         &MinorVersion,
         &BuildNumber,
         &RevisionNumber);
 
-    StringCchPrintf(buf, 4096, L"%d.%d.%d.%d", MajorVersion, MinorVersion, BuildNumber, RevisionNumber);
+    StringCchPrintf(oldVersion, 60, L"%d.%d.%d.%d", MajorVersion, MinorVersion, BuildNumber, RevisionNumber);
 
     IWinHttpRequest *  pIWinHttpRequest = NULL;
     BSTR            bstrResponse = NULL;
@@ -461,9 +463,128 @@ void ProcessLatestUpdate()
 
         hr = pIWinHttpRequest->get_ResponseText(&bstrResponse);
 
+        wstring txt = bstrResponse;
+        wstring newUpdateVersion = GetNewVersion(txt);
+        if (newUpdateVersion.length() == 0)
+        {
+            break;
+        }
 
-        // Print response to console.
-        wprintf(L"%.256s", bstrResponse);
+        if (newUpdateVersion == oldVersion)
+        {
+            if (isConsoleApp == true)
+            {
+                printf("This is the latest version\n");
+            }
+            break;
+        }
+
+        // if new, update latest version.
+        // if old, roll-back last stable version.
+
+        bool is32bit = sizeof(char *) == 4;
+        wstring location = GetUpdateLocation(txt, is32bit);
+
+        VariantInit(&varEmpty);
+        V_VT(&varEmpty) = VT_ERROR;
+
+        bstrMethod = SysAllocString(L"GET");
+        bstrUrl = SysAllocString(location.c_str());
+        pIWinHttpRequest->Open(bstrMethod, bstrUrl, varFalse);
+        SysFreeString(bstrMethod);
+        SysFreeString(bstrUrl);
+
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        hr = pIWinHttpRequest->Send(varEmpty);
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        VARIANT varResponse;
+        VariantInit(&varResponse);
+        hr = pIWinHttpRequest->get_ResponseStream(&varResponse);
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        txt = pIWinHttpRequest->GetResponseHeader(L"Content-Type").operator const wchar_t *();
+        if (txt.find(L"text/html") != -1)
+        {
+            wprintf(L"file not found: %s", location.c_str());
+            break;
+        }
+
+        IStream*    pStream = NULL;
+        BYTE        bBuffer[8192];
+        DWORD       cb, cbRead, cbWritten;
+        // Check that an IStream was received.
+        if (VT_UNKNOWN == V_VT(&varResponse) || VT_STREAM == V_VT(&varResponse))
+        {
+            // Get IStream interface pStream.
+            hr = V_UNKNOWN(&varResponse)->QueryInterface(IID_IStream,
+                reinterpret_cast<void**>(&pStream));
+        }
+        else
+        {
+            break;
+        }
+
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        wchar_t szTempFileName[MAX_PATH];
+        bool succeed = true;
+
+        HANDLE hFile = CreateFile(szTempFileName,
+            GENERIC_WRITE,                // Open for writing. 
+            0,                            // Do not share. 
+            NULL,                         // No security. 
+            CREATE_ALWAYS,                // Overwrite existing.
+            FILE_ATTRIBUTE_NORMAL,        // Normal file.
+            NULL);                        // No attribute template.
+        if (hFile == INVALID_HANDLE_VALUE)
+        {
+            wprintf(L"Can't open a file: %s", szTempFileName);
+            break;
+        }
+        else
+        {
+            cb = sizeof(bBuffer);
+            hr = pStream->Read(bBuffer, cb, &cbRead);
+            while (SUCCEEDED(hr) && 0 != cbRead)
+            {
+                if (!WriteFile(hFile, bBuffer,
+                    cbRead, &cbWritten, NULL))
+                {
+                    printf("WriteFile fails with 0x%08lx\n", HRESULT_FROM_WIN32(GetLastError()));
+                    succeed = false;
+                    break;
+                }
+
+                hr = pStream->Read(bBuffer, cb, &cbRead);
+            }
+        }
+
+        if (succeed == true)
+        {
+            wstring oldFileName = thisFileName;
+            oldFileName += oldVersion;
+            MoveFile(thisFileName, oldFileName.c_str());
+
+            MoveFile(szTempFileName, thisFileName);
+        }
+
+        CloseHandle(hFile);
+        pStream->Release();
+        VariantClear(&varResponse);
 
     } while (false);
 
@@ -511,4 +632,47 @@ BOOL GetAppVersion(wchar_t *LibName, WORD *MajorVersion, WORD *MinorVersion, WOR
     }
     free(lpData);
     return FALSE;
+}
+
+wstring GetNewVersion(wstring txt)
+{
+    wstring startTag = L"<version>";
+
+    int spos = txt.find(startTag);
+    if (spos == -1)
+    {
+        return L"";
+    }
+
+    int epos = txt.find(L"</version>", spos);
+    if (epos == -1)
+    {
+        return L"";
+    }
+
+    spos += startTag.length();
+    return txt.substr(spos, epos - spos);
+}
+
+wstring GetUpdateLocation(wstring txt, bool is32bit)
+{
+    wchar_t startTag[MAX_PATH] = { 0 };
+
+    StringCchPrintf(startTag, MAX_PATH, L"<location platform=\"%s\">", is32bit == true ? L"win32" : L"win64");
+
+    int spos = txt.find(startTag);
+    if (spos == -1)
+    {
+        return L"";
+    }
+
+    int epos = txt.find(L"</location>", spos);
+    if (epos == -1)
+    {
+        return L"";
+    }
+
+    int len = wcslen(startTag);
+    spos += len;
+    return txt.substr(spos, epos - spos);
 }

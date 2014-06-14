@@ -25,5 +25,5 @@ enum IC_RSEULT {
 
 #define SERVICE_NAME L"StrawAgent"
 #define REG_SERVICE L"SYSTEM\\CurrentControlSet\\Services\\" ##SERVICE_NAME
-#define UPDATE_CHECK_URL L"https://github.com/stjeong/Straw/tree/master/agent/windows/version.xml"
+#define UPDATE_CHECK_URL L"https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/version.xml"
 

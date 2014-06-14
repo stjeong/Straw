@@ -611,7 +611,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
         if (cmdOptionExists(g_argv, g_argv + g_argc, L"-update") == true)
         {
-            ProcessLatestUpdate();
+            ProcessLatestUpdate(isConsoleApp);
             break;
         }
 
@@ -683,9 +683,9 @@ DWORD ServiceExecutionThread(LPDWORD param)
             ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
         });
 
-        thread updateThread([]()
+        thread updateThread([isConsoleApp]()
         {
-            ProcessLatestUpdate();
+            ProcessLatestUpdate(isConsoleApp);
         });
 
         if (isConsoleApp == true)

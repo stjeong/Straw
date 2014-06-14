@@ -22,8 +22,10 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
 void DoUnregistration();
 void DoStartService();
 BOOL DoStopService();
-void ProcessLatestUpdate();
+void ProcessLatestUpdate(bool isConsoleApp);
 BOOL GetAppVersion(wchar_t *LibName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber);
+wstring GetNewVersion(wstring txt);
+wstring GetUpdateLocation(wstring txt, bool is32bit);
 
 VOID ServiceMain(DWORD argc, LPTSTR *argv);
 VOID ServiceCtrlHandler(DWORD controlCode);
