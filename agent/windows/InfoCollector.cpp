@@ -609,6 +609,12 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-update") == true)
+        {
+            ProcessLatestUpdate();
+            break;
+        }
+
         apiKey = GetApiKey(g_argc, g_argv);
         envInfo = GetEnvInfo(g_argc, g_argv);
         intervalTimes = GetIntervalTime(g_argc, g_argv);
@@ -677,6 +683,11 @@ DWORD ServiceExecutionThread(LPDWORD param)
             ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
         });
 
+        thread updateThread([]()
+        {
+            ProcessLatestUpdate();
+        });
+
         if (isConsoleApp == true)
         {
             printf("Press any key to exit...\n");
@@ -687,8 +698,15 @@ DWORD ServiceExecutionThread(LPDWORD param)
             WaitForSingleObject(g_killServiceEvent, INFINITE);
         }
 
+#if _DEBUG
+        ::OutputDebugString(L"Service thread detaching...\n");
+#endif
         processCpuMemThread.detach();
         processDiskThread.detach();
+        updateThread.detach();
+#if _DEBUG
+        ::OutputDebugString(L"Service thread detached\n");
+#endif
 
     } while (false);
 

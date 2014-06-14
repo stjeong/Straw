@@ -11,6 +11,8 @@
 
 #include "InfoCollector.h"
 
+#pragma comment(lib, "Version.lib")
+
 void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vector<int> intervalTimes)
 {
     printf("Installing Service...\n");
@@ -114,7 +116,6 @@ void DoUnregistration()
 
     SC_HANDLE myService = NULL;
     BOOL success;
-    SERVICE_STATUS status;
 
     do
     {
@@ -385,4 +386,129 @@ BOOL DoStopService()
     }
 
     return stopped;
+}
+
+#import <winhttp.dll> no_namespace, named_guids  
+
+void ProcessLatestUpdate()
+{
+    WORD MajorVersion = 0;
+    WORD MinorVersion = 0;
+    WORD BuildNumber = 0;
+    WORD RevisionNumber = 0;
+
+    TCHAR buf[4096];
+    GetModuleFileName(NULL, buf, 4096);
+
+    GetAppVersion(buf,
+        &MajorVersion,
+        &MinorVersion,
+        &BuildNumber,
+        &RevisionNumber);
+
+    StringCchPrintf(buf, 4096, L"%d.%d.%d.%d", MajorVersion, MinorVersion, BuildNumber, RevisionNumber);
+
+    IWinHttpRequest *  pIWinHttpRequest = NULL;
+    BSTR            bstrResponse = NULL;
+
+    HRESULT hr = CoInitialize(NULL);
+
+    do
+    {
+        VARIANT         varFalse;
+        VARIANT         varEmpty;
+
+        CLSID           clsid;
+
+        VariantInit(&varFalse);
+        V_VT(&varFalse) = VT_BOOL;
+        V_BOOL(&varFalse) = VARIANT_FALSE;
+
+        VariantInit(&varEmpty);
+        V_VT(&varEmpty) = VT_ERROR;
+
+        hr = CLSIDFromProgID(L"WinHttp.WinHttpRequest.5.1", &clsid);
+
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+        
+        hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
+            IID_IWinHttpRequest, (void **)&pIWinHttpRequest);
+        
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        BSTR bstrMethod = SysAllocString(L"GET");
+        BSTR bstrUrl = SysAllocString(UPDATE_CHECK_URL);
+        hr = pIWinHttpRequest->Open(bstrMethod, bstrUrl, varFalse);
+        SysFreeString(bstrMethod);
+        SysFreeString(bstrUrl);
+
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        hr = pIWinHttpRequest->Send(varEmpty);
+        if (SUCCEEDED(hr) == FALSE)
+        {
+            break;
+        }
+
+        hr = pIWinHttpRequest->get_ResponseText(&bstrResponse);
+
+
+        // Print response to console.
+        wprintf(L"%.256s", bstrResponse);
+
+    } while (false);
+
+    // Release memory.
+    if (pIWinHttpRequest)
+    {
+        pIWinHttpRequest->Release();
+    }
+
+    if (bstrResponse)
+    {
+        SysFreeString(bstrResponse);
+    }
+
+    CoUninitialize();
+}
+
+BOOL GetAppVersion(wchar_t *LibName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber)
+{
+    DWORD dwHandle, dwLen;
+    UINT BufLen;
+    LPTSTR lpData;
+    VS_FIXEDFILEINFO *pFileInfo;
+    dwLen = GetFileVersionInfoSize(LibName, &dwHandle);
+    if (!dwLen)
+        return FALSE;
+
+    lpData = (LPTSTR)malloc(dwLen);
+    if (!lpData)
+        return FALSE;
+
+    if (!GetFileVersionInfo(LibName, dwHandle, dwLen, lpData))
+    {
+        free(lpData);
+        return FALSE;
+    }
+    if (VerQueryValue(lpData, L"\\", (LPVOID *)&pFileInfo, (PUINT)&BufLen))
+    {
+        *MajorVersion = HIWORD(pFileInfo->dwFileVersionMS);
+        *MinorVersion = LOWORD(pFileInfo->dwFileVersionMS);
+        *BuildNumber = HIWORD(pFileInfo->dwFileVersionLS);
+        *RevisionNumber = LOWORD(pFileInfo->dwFileVersionLS);
+        free(lpData);
+        return TRUE;
+    }
+    free(lpData);
+    return FALSE;
 }

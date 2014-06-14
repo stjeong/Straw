@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<response>
+    <version>1.0.0.1</version>
+    <location platform="win32">https://github.com/stjeong/Straw/tree/master/agent/windows/ic32.exe</location>
+    <location platform="win64">https://github.com/stjeong/Straw/tree/master/agent/windows/ic64.exe</location>
+</response>
+
+
+

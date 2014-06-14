@@ -22,6 +22,8 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
 void DoUnregistration();
 void DoStartService();
 BOOL DoStopService();
+void ProcessLatestUpdate();
+BOOL GetAppVersion(wchar_t *LibName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber);
 
 VOID ServiceMain(DWORD argc, LPTSTR *argv);
 VOID ServiceCtrlHandler(DWORD controlCode);
