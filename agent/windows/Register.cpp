@@ -8,10 +8,12 @@
 #include <codecvt>
 
 #include <strsafe.h>
+#include <Shlwapi.h>
 
 #include "InfoCollector.h"
 
 #pragma comment(lib, "Version.lib")
+#pragma comment(lib, "Shlwapi.lib")
 
 void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vector<int> intervalTimes)
 {
@@ -30,10 +32,9 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
 
     do
     {
-        wchar_t filePath[MAX_PATH];
-        ::GetModuleFileName(NULL, filePath, MAX_PATH);
+        wstring filePath = g_modulePath;
         wchar_t safeFilePath[MAX_PATH];
-        StringCchPrintf(safeFilePath, MAX_PATH, L"\"%s\"", filePath);
+        StringCchPrintf(safeFilePath, MAX_PATH, L"\"%s\"", filePath.c_str());
 
         printf("Opened Service Control Manager...\n");
         SC_HANDLE myService = CreateService(
@@ -393,22 +394,18 @@ BOOL DoStopService()
 
 void ProcessLatestUpdate(bool isConsoleApp)
 {
-    WORD MajorVersion = 0;
-    WORD MinorVersion = 0;
-    WORD BuildNumber = 0;
-    WORD RevisionNumber = 0;
+    WORD majorVersion = 0;
+    WORD minorVersion = 0;
+    WORD buildNumber = 0;
+    WORD revisionNumber = 0;
 
-    wchar_t thisFileName[4096];
-    wchar_t oldVersion[60];
-    GetModuleFileName(NULL, thisFileName, 4096);
+    wchar_t szTempFileName[MAX_PATH] { 0 };
+    wchar_t lpTempPathBuffer[MAX_PATH] = { 0 };
 
-    GetAppVersion(thisFileName,
-        &MajorVersion,
-        &MinorVersion,
-        &BuildNumber,
-        &RevisionNumber);
+    wstring thisFileName = g_modulePath;
+    wstring currentVersion;
 
-    StringCchPrintf(oldVersion, 60, L"%d.%d.%d.%d", MajorVersion, MinorVersion, BuildNumber, RevisionNumber);
+    currentVersion = GetAppVersion(thisFileName.c_str(), &majorVersion, &minorVersion, &buildNumber, &revisionNumber);
 
     IWinHttpRequest *  pIWinHttpRequest = NULL;
     BSTR            bstrResponse = NULL;
@@ -470,11 +467,20 @@ void ProcessLatestUpdate(bool isConsoleApp)
             break;
         }
 
-        if (newUpdateVersion == oldVersion)
+        if (newUpdateVersion == currentVersion)
         {
             if (isConsoleApp == true)
             {
-                printf("This is the latest version\n");
+                wprintf(L"This is the latest version (%s)\n", currentVersion.c_str());
+            }
+            break;
+        }
+
+        if (IsNewVersion(majorVersion, minorVersion, buildNumber, revisionNumber, newUpdateVersion) == FALSE)
+        {
+            if (isConsoleApp == true)
+            {
+                wprintf(L"This is the latest version (%s)\n", currentVersion.c_str());
             }
             break;
         }
@@ -540,7 +546,26 @@ void ProcessLatestUpdate(bool isConsoleApp)
             break;
         }
 
-        wchar_t szTempFileName[MAX_PATH];
+        //  Gets the temp path env string (no guarantee it's a valid path).
+        DWORD dwRetVal = GetTempPath(MAX_PATH,          // length of the buffer
+            lpTempPathBuffer); // buffer for path 
+        if (dwRetVal > MAX_PATH || (dwRetVal == 0))
+        {
+            wprintf(L"GetTempPath failed (%d)", GetLastError());
+            break;
+        }
+
+        //  Generates a temporary file name. 
+        dwRetVal = GetTempFileName(lpTempPathBuffer, // directory for tmp files
+            L"straw",     // temp file name prefix 
+            0,                // create unique name 
+            szTempFileName);  // buffer for name 
+        if (dwRetVal == 0)
+        {
+            wprintf(L"GetTempFileName failed (%d)", GetLastError());
+            break;
+        }
+
         bool succeed = true;
 
         HANDLE hFile = CreateFile(szTempFileName,
@@ -573,20 +598,36 @@ void ProcessLatestUpdate(bool isConsoleApp)
             }
         }
 
-        if (succeed == true)
-        {
-            wstring oldFileName = thisFileName;
-            oldFileName += oldVersion;
-            MoveFile(thisFileName, oldFileName.c_str());
-
-            MoveFile(szTempFileName, thisFileName);
-        }
-
         CloseHandle(hFile);
         pStream->Release();
         VariantClear(&varResponse);
 
+        if (succeed == true)
+        {
+            wstring oldFileName = thisFileName;
+            oldFileName += currentVersion;
+
+            ::DeleteFile(oldFileName.c_str());
+
+            if (MoveFile(thisFileName.c_str(), oldFileName.c_str()) == FALSE)
+            {
+                printf("Backup fails (%d)", GetLastError());
+                break;
+            }
+
+            if (MoveFile(szTempFileName, thisFileName.c_str()) == FALSE)
+            {
+                printf("Update fails (%d)", GetLastError());
+                break;
+            }
+        }
+
     } while (false);
+
+    if (::PathFileExists(szTempFileName) == TRUE)
+    {
+        ::DeleteFile(szTempFileName);
+    }
 
     // Release memory.
     if (pIWinHttpRequest)
@@ -602,36 +643,68 @@ void ProcessLatestUpdate(bool isConsoleApp)
     CoUninitialize();
 }
 
-BOOL GetAppVersion(wchar_t *LibName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber)
+wstring GetAppVersion(const wchar_t *pModuleFileName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber)
 {
     DWORD dwHandle, dwLen;
     UINT BufLen;
-    LPTSTR lpData;
+    wchar_t *lpData;
     VS_FIXEDFILEINFO *pFileInfo;
-    dwLen = GetFileVersionInfoSize(LibName, &dwHandle);
+
+    dwLen = GetFileVersionInfoSize(pModuleFileName, &dwHandle);
+
     if (!dwLen)
-        return FALSE;
-
-    lpData = (LPTSTR)malloc(dwLen);
-    if (!lpData)
-        return FALSE;
-
-    if (!GetFileVersionInfo(LibName, dwHandle, dwLen, lpData))
     {
-        free(lpData);
-        return FALSE;
+        return L"";
     }
-    if (VerQueryValue(lpData, L"\\", (LPVOID *)&pFileInfo, (PUINT)&BufLen))
+
+    lpData = new wchar_t[dwLen];
+
+    if (lpData == NULL)
     {
-        *MajorVersion = HIWORD(pFileInfo->dwFileVersionMS);
-        *MinorVersion = LOWORD(pFileInfo->dwFileVersionMS);
-        *BuildNumber = HIWORD(pFileInfo->dwFileVersionLS);
-        *RevisionNumber = LOWORD(pFileInfo->dwFileVersionLS);
-        free(lpData);
-        return TRUE;
+        return L"";
     }
-    free(lpData);
-    return FALSE;
+
+    wchar_t oldVersion[60];
+
+    do
+    {
+        if (!GetFileVersionInfo(pModuleFileName, dwHandle, dwLen, lpData))
+        {
+            break;
+        }
+
+        if (VerQueryValue(lpData, L"\\", (LPVOID *)&pFileInfo, (PUINT)&BufLen))
+        {
+            if (MajorVersion != NULL)
+            {
+                *MajorVersion = HIWORD(pFileInfo->dwFileVersionMS);
+            }
+            if (MinorVersion != NULL)
+            {
+                *MinorVersion = LOWORD(pFileInfo->dwFileVersionMS);
+            }
+
+            if (BuildNumber != NULL)
+            {
+                *BuildNumber = HIWORD(pFileInfo->dwFileVersionLS);
+            }
+
+            if (RevisionNumber != NULL)
+            {
+                *RevisionNumber = LOWORD(pFileInfo->dwFileVersionLS);
+            }
+
+            StringCchPrintf(oldVersion, 60, L"%d.%d.%d.%d", HIWORD(pFileInfo->dwFileVersionMS),
+                                                            LOWORD(pFileInfo->dwFileVersionMS), 
+                                                            HIWORD(pFileInfo->dwFileVersionLS),
+                                                            LOWORD(pFileInfo->dwFileVersionLS));
+        }
+
+    } while (false);
+
+    delete[] lpData;
+
+    return oldVersion;
 }
 
 wstring GetNewVersion(wstring txt)
@@ -675,4 +748,48 @@ wstring GetUpdateLocation(wstring txt, bool is32bit)
     int len = wcslen(startTag);
     spos += len;
     return txt.substr(spos, epos - spos);
+}
+
+BOOL IsNewVersion(WORD majorVersion, WORD minorVersion, WORD buildNumber, WORD revisionNumber, wstring newUpdateVersion)
+{
+    StringSplit text;
+    text.SplitString(newUpdateVersion, L".");
+
+    if (text.GetCount() != 4)
+    {
+        return FALSE;
+    }
+
+    int newMajor = ::_wtoi(text.GetValue(0).c_str());
+    int newMinor = ::_wtoi(text.GetValue(1).c_str());
+    int newBuild = ::_wtoi(text.GetValue(2).c_str());
+    int newRevision = ::_wtoi(text.GetValue(3).c_str());
+
+    if (newMajor > majorVersion)
+    {
+        return TRUE;
+    }
+    else if (newMajor == majorVersion)
+    {
+        if (newMinor > minorVersion)
+        {
+            return TRUE;
+        }
+        else if (newMinor == minorVersion)
+        {
+            if (newBuild > buildNumber)
+            {
+                return TRUE;
+            }
+            else if (newBuild == buildNumber)
+            {
+                if (newRevision > revisionNumber)
+                {
+                    return TRUE;
+                }
+            }
+        }
+    }
+
+    return FALSE;
 }

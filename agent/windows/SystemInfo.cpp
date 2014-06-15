@@ -5,6 +5,9 @@
 #include <WinBase.h>
 #include <codecvt>
 
+#include <strsafe.h>
+
+#include "InfoCollector.h"
 #include "SystemInfo.h"
 
 int old_numberOfCpu;
@@ -32,6 +35,10 @@ bool IsConsoleApp()
 
 void IntializeSystemInfo()
 {
+    wchar_t thisFileName[4096];
+    GetModuleFileName(NULL, thisFileName, 4096);
+    g_modulePath = thisFileName;
+    
     if (NtQuerySystemInformation == nullptr)
     {
         NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
@@ -167,7 +174,7 @@ bool RetrieveCpuInfo(StringBuilder &sb, float *totalUsage)
             old_cpuTime[i + 2] = currentKernel;
 
             wchar_t buf[25];
-            swprintf(buf, L"%.2f", (kernel + user));
+            StringCchPrintf(buf, 25, L"%.2f", (kernel + user));
             sb.push_back(buf);
 
             if (j != numberOfCpu - 1)

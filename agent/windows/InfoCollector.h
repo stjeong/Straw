@@ -23,9 +23,10 @@ void DoUnregistration();
 void DoStartService();
 BOOL DoStopService();
 void ProcessLatestUpdate(bool isConsoleApp);
-BOOL GetAppVersion(wchar_t *LibName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber);
+wstring GetAppVersion(const wchar_t *pModuleFileName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber);
 wstring GetNewVersion(wstring txt);
 wstring GetUpdateLocation(wstring txt, bool is32bit);
+BOOL IsNewVersion(WORD majorVersion, WORD minorVersion, WORD buildNumber, WORD revisionNumber, wstring newUpdateVersion);
 
 VOID ServiceMain(DWORD argc, LPTSTR *argv);
 VOID ServiceCtrlHandler(DWORD controlCode);
@@ -38,3 +39,5 @@ void KillService();
 
 DWORD ServiceExecutionThread(LPDWORD param);
 BOOL StartServiceThread();
+
+extern wstring g_modulePath;

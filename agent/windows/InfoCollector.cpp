@@ -29,6 +29,7 @@ SERVICE_STATUS_HANDLE g_serviceStatusHandle = NULL;
 BOOL g_serviceRunning = FALSE;
 BOOL g_servicePaused = FALSE;
 HANDLE g_killServiceEvent = NULL;
+wstring g_modulePath = L"";
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -295,6 +296,10 @@ void ShowHelp()
 #else
     int platformId = 32;
 #endif
+
+    wstring appVersion = GetAppVersion(g_modulePath.c_str(), NULL, NULL, NULL, NULL);
+
+    wprintf(L"ic%d.exe (ver %s)\n", platformId, appVersion.c_str());
     printf("ic%d.exe -h\n", platformId);
     printf("ic%d.exe -key [apikey] -s [hostaddress] -id [agentid] -d [interval-sec,[...]]\n", platformId);
     printf("\n");
@@ -685,7 +690,13 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
         thread updateThread([isConsoleApp]()
         {
-            ProcessLatestUpdate(isConsoleApp);
+            DWORD oneday = 1000 * 60 * 60 * 24;
+
+            while (true)
+            {
+                ProcessLatestUpdate(isConsoleApp);
+                Sleep(oneday);
+            }
         });
 
         if (isConsoleApp == true)
