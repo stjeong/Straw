@@ -114,9 +114,10 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 {
     wstring data = sb.ToString();
 
-#if defined(_DEBUG)
-    ::OutputDebugString((data + L"\n").c_str());
-#endif
+    if (g_debugMode == true)
+    {
+        OutputConsole(L"%s\n", data.c_str());
+    }
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
     string utfData = myconv.to_bytes(data);
