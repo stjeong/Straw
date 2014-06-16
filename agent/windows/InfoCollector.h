@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 
+BOOL GetDebugMode(int argc, _TCHAR* argv[]);
 wstring GetApiKey(int argc, _TCHAR* argv[]);
 wstring GetUID(int argc, _TCHAR* argv[]);
 wstring GetEnvInfo(int argc, _TCHAR* argv[]);

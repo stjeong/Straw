@@ -11,9 +11,12 @@ $url = New-Object System.Uri($moduleAddress)
 $fileName = [IO.Path]::GetFileName($url.LocalPath)
 $localFilePath = [IO.Path]::Combine($PSScriptRoot, $fileName)
 
+[IO.File]::Delete($localFilePath)
+
 $client.DownloadFile($moduleAddress, $localFilePath)
 
 ./ic32.exe -key ce3bd840-f0a7-11e3-ac10-0800200c9a66 -regservice -debug
+./ic32.exe -start
 
 
 # $client.DownloadFile(

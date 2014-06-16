@@ -67,6 +67,11 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
         StringCchPrintf(szBuffer, MAX_PATH, L"port=%d", port);
         sb.push_back(szBuffer);
 
+        if (g_debugMode == TRUE)
+        {
+            sb.push_back(L"debug=1");
+        }
+
         if (RegOpenKey(HKEY_LOCAL_MACHINE, REG_SERVICE, &hkey) != ERROR_SUCCESS)
         {
             OutputError(L"RegOpenKey fails! (%d)\n", GetLastError());

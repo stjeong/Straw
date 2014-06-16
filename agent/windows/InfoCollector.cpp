@@ -126,6 +126,21 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
         sizeof(remoteServAddr));
 }
 
+BOOL GetDebugMode(int argc, _TCHAR* argv[])
+{
+    if (g_isConsoleApp == false)
+    {
+        return GetEnvVar(L"debug") == L"1";
+    }
+
+    if (cmdOptionExists(g_argv, g_argv + g_argc, L"-debug") == true)
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 wstring GetApiKey(int argc, _TCHAR* argv[])
 {
     if (g_isConsoleApp == false)
@@ -577,10 +592,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
         vector<int> intervalTimes;
         ConnectionInfo connection;
 
-        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-debug") == true)
-        {
-            g_debugMode = TRUE;
-        }
+        g_debugMode = GetDebugMode(g_argc, g_argv);
 
         if (cmdOptionExists(g_argv, g_argv + g_argc, L"-h") == true
             || cmdOptionExists(g_argv, g_argv + g_argc, L"/h") == true)
@@ -612,7 +624,6 @@ DWORD ServiceExecutionThread(LPDWORD param)
             ProcessLatestUpdate();
             break;
         }
-
 
         apiKey = GetApiKey(g_argc, g_argv);
         envInfo = GetEnvInfo(g_argc, g_argv);
