@@ -8,8 +8,6 @@ wstring GetEnvInfo(int argc, _TCHAR* argv[]);
 string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo &connection);
 void SetupHostPort(int argc, _TCHAR* argv[], ConnectionInfo &connection);
 
-void OutputError(wstring txt, ...);
-
 wstring GetComputerName();
 vector<int> GetIntervalTime(int argc, _TCHAR* argv[]);
 
@@ -23,7 +21,7 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
 void DoUnregistration();
 void DoStartService();
 BOOL DoStopService();
-void ProcessLatestUpdate(bool isConsoleApp);
+void ProcessLatestUpdate();
 wstring GetAppVersion(const wchar_t *pModuleFileName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber);
 wstring GetNewVersion(wstring txt);
 wstring GetUpdateLocation(wstring txt, bool is32bit);

@@ -17,14 +17,14 @@
 
 void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int port, vector<int> intervalTimes)
 {
-    printf("Installing Service...\n");
+    OutputConsole(L"Installing Service...\n");
 
     DoUnregistration();
 
     SC_HANDLE scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
     if (!scm)
     {
-        printf("OpenSCManager fails! (%d)\n", GetLastError());
+        OutputError(L"OpenSCManager fails! (%d)\n", GetLastError());
         return;
     }
 
@@ -38,8 +38,8 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
         wchar_t safeFilePath[MAX_PATH];
         StringCchPrintf(safeFilePath, MAX_PATH, L"\"%s\"", filePath.c_str());
 
-        printf("Opened Service Control Manager...\n");
-        SC_HANDLE myService = CreateService(
+        OutputConsole(L"Opened Service Control Manager...\n");
+        myService = CreateService(
             scm, SERVICE_NAME, // the internal service name used by the SCM
             L"StrawAgent Service",  // the external label seen in the Service Control applet
             SERVICE_ALL_ACCESS,  // We want full access to control the service
@@ -51,7 +51,7 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
 
         if (!myService)
         {
-            printf("CreateService fails! (%d)\n", GetLastError());
+            OutputError(L"CreateService fails! (%d)\n", GetLastError());
             break;
         }
 
@@ -69,7 +69,7 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
 
         if (RegOpenKey(HKEY_LOCAL_MACHINE, REG_SERVICE, &hkey) != ERROR_SUCCESS)
         {
-            printf("RegOpenKey fails! (%d)\n", GetLastError());
+            OutputError(L"RegOpenKey fails! (%d)\n", GetLastError());
             break;
         }
 
@@ -78,11 +78,11 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
 
         if (RegSetValueEx(hkey, L"Environment", 0, REG_MULTI_SZ, (const BYTE *)pBuf, written) != ERROR_SUCCESS)
         {
-            printf("RegSetValueEx fails! (%d)\n", GetLastError());
+            OutputError(L"RegSetValueEx fails! (%d)\n", GetLastError());
             break;
         }
 
-        printf("Service successfully installed.\n");
+        OutputConsole(L"Service successfully installed.\n");
 
     } while (false);
 
@@ -109,12 +109,12 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
 
 void DoUnregistration()
 {
-    printf("Removing Service...\n");
+    OutputConsole(L"Removing Service...\n");
 
     SC_HANDLE scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
     if (!scm)
     {
-        printf("OpenSCManager fails! (%d)\n", GetLastError());
+        OutputError(L"OpenSCManager fails! (%d)\n", GetLastError());
         return;
     }
 
@@ -123,7 +123,7 @@ void DoUnregistration()
 
     do
     {
-        printf("Opened Service Control Manager...\n");
+        OutputConsole(L"Opened Service Control Manager...\n");
         myService = OpenService(scm, SERVICE_NAME, SERVICE_ALL_ACCESS | DELETE);
 
         if (!myService)
@@ -131,11 +131,11 @@ void DoUnregistration()
             DWORD dwResult = GetLastError();
             if (dwResult = ERROR_SERVICE_DOES_NOT_EXIST)
             {
-                printf("Service doesn't exist!\n");
+                OutputConsole(L"Service doesn't exist!\n");
                 break;
             }
 
-            printf("OpenService fails! (%d)\n", dwResult);
+            OutputError(L"OpenService fails! (%d)\n", dwResult);
             break;
         }
 
@@ -148,11 +148,11 @@ void DoUnregistration()
         success = DeleteService(myService);
         if (success)
         {
-            printf("Service successfully removed.\n");
+            OutputConsole(L"Service successfully removed.\n");
         }
         else
         {
-            printf("DeleteService Fails! (%d)\n", GetLastError());
+            OutputError(L"DeleteService Fails! (%d)\n", GetLastError());
             break;
         }
 
@@ -174,7 +174,7 @@ void DoStartService()
     SC_HANDLE scm = OpenSCManager(0, 0, SC_MANAGER_ALL_ACCESS | GENERIC_WRITE);
     if (!scm)
     {
-        printf("OpenSCManager fails! (%d)\n", GetLastError());
+        OutputError(L"OpenSCManager fails! (%d)\n", GetLastError());
         return;
     }
 
@@ -184,36 +184,36 @@ void DoStartService()
 
     do
     {
-        printf("Opened Service Control Manager...\n");
-        SC_HANDLE myService = OpenService(scm, SERVICE_NAME, SERVICE_ALL_ACCESS);
+        OutputConsole(L"Opened Service Control Manager...\n");
+        myService = OpenService(scm, SERVICE_NAME, SERVICE_ALL_ACCESS);
 
         if (!myService)
         {
-            printf("OpenService fails! (%d)\n", GetLastError());
+            OutputError(L"OpenService fails! (%d)\n", GetLastError());
             break;
         }
 
         success = QueryServiceStatus(myService, &status);
         if (!success)
         {
-            printf("QueryServiceStatus fails! (%d)\n", GetLastError());
+            OutputError(L"QueryServiceStatus fails! (%d)\n", GetLastError());
             break;
         }
 
         if (status.dwCurrentState != SERVICE_STOPPED && status.dwCurrentState != SERVICE_STOP_PENDING)
         {
-            printf("Cannot start the service because it is already running\n");
+            OutputError(L"Cannot start the service because it is already running\n");
             break;
         }
 
         success = StartService(myService, 0, NULL);
         if (!success)
         {
-            printf("StartService fails! (%d)\n", GetLastError());
+            OutputError(L"StartService fails! (%d)\n", GetLastError());
             break;
         }
 
-        printf("Service started successfully!\n");
+        OutputConsole(L"Service started successfully!\n");
 
     } while (false);
 
@@ -246,7 +246,7 @@ BOOL DoStopService()
 
     if (NULL == schSCManager)
     {
-        printf("OpenSCManager failed (%d)\n", GetLastError());
+        OutputError(L"OpenSCManager failed (%d)\n", GetLastError());
         return FALSE;
     }
 
@@ -262,7 +262,7 @@ BOOL DoStopService()
     {
         if (schService == NULL)
         {
-            printf("OpenService failed (%d)\n", GetLastError());
+            OutputError(L"OpenService failed (%d)\n", GetLastError());
             break;
         }
 
@@ -274,13 +274,13 @@ BOOL DoStopService()
             sizeof(SERVICE_STATUS_PROCESS),
             &dwBytesNeeded))
         {
-            printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
+            OutputError(L"QueryServiceStatusEx failed (%d)\n", GetLastError());
             break;
         }
 
         if (ssp.dwCurrentState == SERVICE_STOPPED)
         {
-            printf("Service is already stopped.\n");
+            OutputConsole(L"Service is already stopped.\n");
             stopped = TRUE;
             break;
         }
@@ -291,7 +291,7 @@ BOOL DoStopService()
         while (ssp.dwCurrentState == SERVICE_STOP_PENDING)
         {
             exitLoop = true;
-            printf("Service stop pending...\n");
+            OutputConsole(L"Service stop pending...\n");
 
             // Do not wait longer than the wait hint. A good interval is 
             // one-tenth of the wait hint but not less than 1 second  
@@ -313,20 +313,20 @@ BOOL DoStopService()
                 sizeof(SERVICE_STATUS_PROCESS),
                 &dwBytesNeeded))
             {
-                printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
+                OutputError(L"QueryServiceStatusEx failed (%d)\n", GetLastError());
                 break;
             }
 
             if (ssp.dwCurrentState == SERVICE_STOPPED)
             {
-                printf("Service stopped successfully.\n");
+                OutputConsole(L"Service stopped successfully.\n");
                 stopped = TRUE;
                 break;
             }
 
             if (GetTickCount() - dwStartTime > dwTimeout)
             {
-                printf("Service stop timed out.\n");
+                OutputError(L"Service stop timed out.\n");
                 break;
             }
         }
@@ -337,12 +337,9 @@ BOOL DoStopService()
         }
 
         // Send a stop code to the service.
-        if (!ControlService(
-            schService,
-            SERVICE_CONTROL_STOP,
-            (LPSERVICE_STATUS)&ssp))
+        if (!ControlService(schService, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)&ssp))
         {
-            printf("ControlService failed (%d)\n", GetLastError());
+            OutputError(L"ControlService failed (%d)\n", GetLastError());
             break;
         }
 
@@ -357,7 +354,7 @@ BOOL DoStopService()
                 sizeof(SERVICE_STATUS_PROCESS),
                 &dwBytesNeeded))
             {
-                printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
+                OutputError(L"QueryServiceStatusEx failed (%d)\n", GetLastError());
                 exitLoop = true;
                 break;
             }
@@ -370,7 +367,7 @@ BOOL DoStopService()
 
             if (GetTickCount() - dwStartTime > dwTimeout)
             {
-                printf("Wait timed out\n");
+                OutputError(L"Wait timed out\n");
                 exitLoop = true;
                 break;
             }
@@ -382,7 +379,7 @@ BOOL DoStopService()
         }
 
         stopped = TRUE;
-        printf("Service stopped successfully\n");
+        OutputConsole(L"Service stopped successfully\n");
 
     } while (false);
 
@@ -402,7 +399,7 @@ BOOL DoStopService()
 #import <winhttp.dll> no_namespace, named_guids  
 #include <msxml.h>
 
-void ProcessLatestUpdate(bool isConsoleApp)
+void ProcessLatestUpdate()
 {
     WORD majorVersion = 0;
     WORD minorVersion = 0;
@@ -479,18 +476,18 @@ void ProcessLatestUpdate(bool isConsoleApp)
 
         if (newUpdateVersion == currentVersion)
         {
-            if (isConsoleApp == true)
+            if (g_isConsoleApp == TRUE)
             {
-                wprintf(L"This is the latest version (%s)\n", currentVersion.c_str());
+                OutputConsole(L"This is the latest version (%s)\n", currentVersion.c_str());
             }
             break;
         }
 
         if (IsNewVersion(majorVersion, minorVersion, buildNumber, revisionNumber, newUpdateVersion) == FALSE)
         {
-            if (isConsoleApp == true)
+            if (g_isConsoleApp == TRUE)
             {
-                wprintf(L"This is the latest version (%s)\n", currentVersion.c_str());
+                OutputConsole(L"This is the latest version (%s)\n", L"1.0.0.4"); // currentVersion.c_str());
             }
             break;
         }
@@ -532,7 +529,7 @@ void ProcessLatestUpdate(bool isConsoleApp)
         txt = pIWinHttpRequest->GetResponseHeader(L"Content-Type").operator const wchar_t *();
         if (txt.find(L"text/html") != -1)
         {
-            wprintf(L"file not found: %s", location.c_str());
+            OutputError(L"file not found: %s", location.c_str());
             break;
         }
 
@@ -561,7 +558,7 @@ void ProcessLatestUpdate(bool isConsoleApp)
             lpTempPathBuffer); // buffer for path 
         if (dwRetVal > MAX_PATH || (dwRetVal == 0))
         {
-            wprintf(L"GetTempPath failed (%d)", GetLastError());
+            OutputError(L"GetTempPath failed (%d)", GetLastError());
             break;
         }
 
@@ -572,7 +569,7 @@ void ProcessLatestUpdate(bool isConsoleApp)
             szTempFileName);  // buffer for name 
         if (dwRetVal == 0)
         {
-            wprintf(L"GetTempFileName failed (%d)", GetLastError());
+            OutputError(L"GetTempFileName failed (%d)", GetLastError());
             break;
         }
 
@@ -587,7 +584,7 @@ void ProcessLatestUpdate(bool isConsoleApp)
             NULL);                        // No attribute template.
         if (hFile == INVALID_HANDLE_VALUE)
         {
-            wprintf(L"Can't open a file: %s", szTempFileName);
+            OutputError(L"Can't open a file: %s", szTempFileName);
             break;
         }
         else
@@ -599,7 +596,7 @@ void ProcessLatestUpdate(bool isConsoleApp)
                 if (!WriteFile(hFile, bBuffer,
                     cbRead, &cbWritten, NULL))
                 {
-                    printf("WriteFile fails with 0x%08lx\n", HRESULT_FROM_WIN32(GetLastError()));
+                    OutputError(L"WriteFile fails with 0x%08lx\n", HRESULT_FROM_WIN32(GetLastError()));
                     succeed = false;
                     break;
                 }
@@ -621,13 +618,13 @@ void ProcessLatestUpdate(bool isConsoleApp)
 
             if (MoveFile(thisFileName.c_str(), oldFileName.c_str()) == FALSE)
             {
-                printf("Backup fails (%d)", GetLastError());
+                OutputError(L"Backup fails (%d)", GetLastError());
                 break;
             }
 
             if (MoveFile(szTempFileName, thisFileName.c_str()) == FALSE)
             {
-                printf("Update fails (%d)", GetLastError());
+                OutputError(L"Update fails (%d)", GetLastError());
                 break;
             }
         }

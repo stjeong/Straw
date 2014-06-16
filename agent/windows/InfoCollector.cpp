@@ -5,8 +5,6 @@
 #include "StringBuilder.h"
 #include "StringSplit.h"
 
-#include <Windows.h>
-#include <WinBase.h>
 #include <codecvt>
 
 #include <thread>
@@ -33,12 +31,12 @@ wstring g_modulePath = L"";
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-    bool isConsoleApp = IsConsoleApp();
+    g_isConsoleApp = IsConsoleApp();
 
     g_argc = argc;
     g_argv = argv;
 
-    if (isConsoleApp == true)
+    if (g_isConsoleApp == TRUE)
     {
         return ServiceExecutionThread(NULL);
     }
@@ -68,7 +66,7 @@ void SetupHostPort(int argc, _TCHAR* argv[], ConnectionInfo &connection)
 {
     wstring txt;
 
-    if (IsConsoleApp() == false)
+    if (g_isConsoleApp == false)
     {
         txt = GetEnvVar(L"port");
     }
@@ -92,7 +90,7 @@ string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo &connection)
 {
     wstring txt;
 
-    if (IsConsoleApp() == false)
+    if (g_isConsoleApp == false)
     {
         txt = GetEnvVar(L"server");
         return ws2s(txt);
@@ -130,7 +128,7 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 
 wstring GetApiKey(int argc, _TCHAR* argv[])
 {
-    if (IsConsoleApp() == false)
+    if (g_isConsoleApp == false)
     {
         return GetEnvVar(L"apiKey");
     }
@@ -145,7 +143,7 @@ wstring GetApiKey(int argc, _TCHAR* argv[])
 
 wstring GetEnvInfo(int argc, _TCHAR* argv[])
 {
-    if (IsConsoleApp() == false)
+    if (g_isConsoleApp == false)
     {
         wstring result = GetEnvVar(L"envKey");
         if (result.length() != 0)
@@ -225,8 +223,6 @@ vector<int> GetIntervalTime(int argc, _TCHAR* argv[])
 void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval)
 {
     StringBuilder sb;
-    bool isConsoleApp = IsConsoleApp();
-
     int sleepTime = interval * 1000;
 
     while (true)
@@ -285,7 +281,7 @@ void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sock
 
             SendToServer(socketHandle, remoteServAddr, sb);
 
-            if (isConsoleApp == true)
+            if (g_isConsoleApp == TRUE)
             {
                 printf(".");
             }
@@ -310,7 +306,6 @@ void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockad
 
         Sleep(sleepTime);
     }
-
 }
 
 void ShowHelp()
@@ -323,51 +318,34 @@ void ShowHelp()
 
     wstring appVersion = GetAppVersion(g_modulePath.c_str(), NULL, NULL, NULL, NULL);
 
-    wprintf(L"ic%d.exe (ver %s)\n", platformId, appVersion.c_str());
-    printf("ic%d.exe -h\n", platformId);
-    printf("ic%d.exe -key [apikey] -s [hostaddress] -id [agentid] -d [interval-sec,[...]]\n", platformId);
-    printf("\n");
-    printf("samples:\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5\n", platformId);
-    printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5:80\n");
-    printf("        (optional: agent id by default - machine name)\n");
-    printf("\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -port 8282\n", platformId);
-    printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5:8282\n");
-    printf("        (optional: agent id by default - machine name)\n");
-    printf("\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100\n", platformId);
-    printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5:80\n");
-    printf("        id: mypc100\n");
-    printf("\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100  -regservice\n", platformId);
-    printf("        Register as NT Service with this info,\n");
-    printf("            apikey: 8CFDDE2478\n");
-    printf("            data server: 192.168.0.5:80\n");
-    printf("            id: mypc100\n");
-    printf("\n");
-    printf("    ic%d.exe -unreg\n", platformId);
-    printf("        Unregister NT Service\n");
-}
-
-void OutputError(wstring txt, ...)
-{
-    va_list args;
-    const wchar_t *fmt = txt.c_str();
-    va_start(args, fmt);
-
-    wprintf(L"Error: ");
-    wprintf(txt.c_str(), args);
-    wprintf(L"\n");
-    
-    va_end(args);
-
-#if _DEBUG
-    ::OutputDebugString(txt.c_str());
-#endif
+    OutputConsole(L"ic%d.exe (ver %s)\n", platformId, appVersion.c_str());
+    OutputConsole(L"ic%d.exe -h\n", platformId);
+    OutputConsole(L"ic%d.exe -key [apikey] -s [hostaddress] -id [agentid] -d [interval-sec,[...]]\n", platformId);
+    OutputConsole(L"\n");
+    OutputConsole(L"samples:\n");
+    OutputConsole(L"    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5\n", platformId);
+    OutputConsole(L"        apikey: 8CFDDE2478\n");
+    OutputConsole(L"        data server: 192.168.0.5:80\n");
+    OutputConsole(L"        (optional: agent id by default - machine name)\n");
+    OutputConsole(L"\n");
+    OutputConsole(L"    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -port 8282\n", platformId);
+    OutputConsole(L"        apikey: 8CFDDE2478\n");
+    OutputConsole(L"        data server: 192.168.0.5:8282\n");
+    OutputConsole(L"        (optional: agent id by default - machine name)\n");
+    OutputConsole(L"\n");
+    OutputConsole(L"    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100\n", platformId);
+    OutputConsole(L"        apikey: 8CFDDE2478\n");
+    OutputConsole(L"        data server: 192.168.0.5:80\n");
+    OutputConsole(L"        id: mypc100\n");
+    OutputConsole(L"\n");
+    OutputConsole(L"    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100  -regservice\n", platformId);
+    OutputConsole(L"        Register as NT Service with this info,\n");
+    OutputConsole(L"            apikey: 8CFDDE2478\n");
+    OutputConsole(L"            data server: 192.168.0.5:80\n");
+    OutputConsole(L"            id: mypc100\n");
+    OutputConsole(L"\n");
+    OutputConsole(L"    ic%d.exe -unreg\n", platformId);
+    OutputConsole(L"        Unregister NT Service\n");
 }
 
 //   ServiceMain -
@@ -584,8 +562,6 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
     IntializeSystemInfo();
 
-    bool isConsoleApp = IsConsoleApp();
-
     WORD wVersionRequested = MAKEWORD(1, 1);
     WSADATA wsaData;
     WSAStartup(wVersionRequested, &wsaData);
@@ -600,6 +576,11 @@ DWORD ServiceExecutionThread(LPDWORD param)
         wstring envInfo;
         vector<int> intervalTimes;
         ConnectionInfo connection;
+
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-debug") == true)
+        {
+            g_debugMode = TRUE;
+        }
 
         if (cmdOptionExists(g_argv, g_argv + g_argc, L"-h") == true
             || cmdOptionExists(g_argv, g_argv + g_argc, L"/h") == true)
@@ -628,9 +609,10 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
         if (cmdOptionExists(g_argv, g_argv + g_argc, L"-update") == true)
         {
-            ProcessLatestUpdate(isConsoleApp);
+            ProcessLatestUpdate();
             break;
         }
+
 
         apiKey = GetApiKey(g_argc, g_argv);
         envInfo = GetEnvInfo(g_argc, g_argv);
@@ -678,7 +660,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
         /* socket creation */
         udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (udpSocket == INVALID_SOCKET) {
-            wprintf(L"socket failed with error: %ld\n", WSAGetLastError());
+            OutputError(L"socket failed with error: %ld\n", WSAGetLastError());
             break;
         }
 
@@ -696,18 +678,18 @@ DWORD ServiceExecutionThread(LPDWORD param)
             ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
         });
 
-        thread updateThread([isConsoleApp]()
+        thread updateThread([]()
         {
             DWORD oneday = 1000 * 60 * 60 * 24;
 
             while (true)
             {
-                ProcessLatestUpdate(isConsoleApp);
+                ProcessLatestUpdate();
                 Sleep(oneday);
             }
         });
 
-        if (isConsoleApp == true)
+        if (g_isConsoleApp == TRUE)
         {
             printf("Press any key to exit...\n");
             getchar();
