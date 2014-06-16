@@ -19,8 +19,11 @@
     <Filter Include="deploy">
       <UniqueIdentifier>{e3069716-4625-4e1b-b15f-6d4316d656d5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="deploy\1.0.0.1">
-      <UniqueIdentifier>{a1ce3f37-e0fb-4efc-a28f-b0d71f63bea7}</UniqueIdentifier>
+    <Filter Include="deploy\1.0.0.2">
+      <UniqueIdentifier>{21df350a-1410-441a-9438-2c8713fbafd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deploy\1.0.0.3">
+      <UniqueIdentifier>{5ed683fb-7093-4673-9aaa-cc95fe0b4d7b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -84,8 +87,17 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="deploy\1.0.0.1\ic32.exe">
-      <Filter>deploy\1.0.0.1</Filter>
+    <None Include="deploy\1.0.0.2\ic32.exe">
+      <Filter>deploy\1.0.0.2</Filter>
+    </None>
+    <None Include="deploy\1.0.0.2\ic64.exe">
+      <Filter>deploy\1.0.0.2</Filter>
+    </None>
+    <None Include="deploy\1.0.0.3\ic32.exe">
+      <Filter>deploy\1.0.0.3</Filter>
+    </None>
+    <None Include="deploy\1.0.0.3\ic64.exe">
+      <Filter>deploy\1.0.0.3</Filter>
     </None>
   </ItemGroup>
 </Project>

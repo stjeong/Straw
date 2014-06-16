@@ -23,7 +23,7 @@
 
 #>
 
-// <#= DateTime.Now.ToString() #>
+// <#= DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture) #>
 
 #include "stdafx.h"
 #include "DataPacket.generated.h"

@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-29 오후 11:17:20
+// 06/16/2014 20:30:05
 
 namespace Kerberos.Data
 {
@@ -33,7 +33,7 @@ namespace Kerberos.Data
         
     
     	
-    	string   _address = "www.geeksaga.com"
+    	string   _address = "straw.imyoyo.net"
         
             ;
         	
@@ -55,7 +55,7 @@ namespace Kerberos.Data
     		}
     	}
     	
-    	int   _port = 80
+    	int   _port = 8282
         
             ;
         	
@@ -128,7 +128,7 @@ namespace Kerberos.Data
         	
         /// <exclude />
     	[DataMember]
-    	public ObservableCollection<float>  Unit
+    	public ObservableCollection<float>  unit
     	{
     		get { return this._unit; }
     		
@@ -140,7 +140,7 @@ namespace Kerberos.Data
     			}
     			
     			this._unit = value;
-    			OnPropertyChanged("Unit"); 
+    			OnPropertyChanged("unit"); 
     		}
     	}
     	
@@ -150,7 +150,7 @@ namespace Kerberos.Data
         	
         /// <exclude />
     	[DataMember]
-    	public float  Total
+    	public float  total
     	{
     		get { return this._total; }
     		
@@ -162,7 +162,7 @@ namespace Kerberos.Data
     			}
     			
     			this._total = value;
-    			OnPropertyChanged("Total"); 
+    			OnPropertyChanged("total"); 
     		}
     	}
     	
@@ -186,14 +186,14 @@ namespace Kerberos.Data
     
     	public static  class Members
     	{
-    		public const string Unit = "Unit";
-    		public const string Total = "Total";
+    		public const string unit = "unit";
+    		public const string total = "total";
     	}
         
     	public static  class SqlVarMembers
     	{
-    		public const string Unit = "@Unit";
-    		public const string Total = "@Total";
+    		public const string unit = "@unit";
+    		public const string total = "@total";
     	}
     }
     
@@ -211,47 +211,47 @@ namespace Kerberos.Data
         
     
     	
-    	long   _maxMB
+    	long   _max
         
             ;
         	
         /// <exclude />
     	[DataMember]
-    	public long  MaxMB
+    	public long  max
     	{
-    		get { return this._maxMB; }
+    		get { return this._max; }
     		
     		set
     		{
-    			if (this._maxMB == value)
+    			if (this._max == value)
     			{
     				return;
     			}
     			
-    			this._maxMB = value;
-    			OnPropertyChanged("MaxMB"); 
+    			this._max = value;
+    			OnPropertyChanged("max"); 
     		}
     	}
     	
-    	long   _currentMB
+    	long   _current
         
             ;
         	
         /// <exclude />
     	[DataMember]
-    	public long  CurrentMB
+    	public long  current
     	{
-    		get { return this._currentMB; }
+    		get { return this._current; }
     		
     		set
     		{
-    			if (this._currentMB == value)
+    			if (this._current == value)
     			{
     				return;
     			}
     			
-    			this._currentMB = value;
-    			OnPropertyChanged("CurrentMB"); 
+    			this._current = value;
+    			OnPropertyChanged("current"); 
     		}
     	}
     	
@@ -275,14 +275,14 @@ namespace Kerberos.Data
     
     	public static  class Members
     	{
-    		public const string MaxMB = "MaxMB";
-    		public const string CurrentMB = "CurrentMB";
+    		public const string max = "max";
+    		public const string current = "current";
     	}
         
     	public static  class SqlVarMembers
     	{
-    		public const string MaxMB = "@MaxMB";
-    		public const string CurrentMB = "@CurrentMB";
+    		public const string max = "@max";
+    		public const string current = "@current";
     	}
     }
     
@@ -300,47 +300,47 @@ namespace Kerberos.Data
         
     
     	
-    	string   _apiKey
+    	string   _groupKey
         
             ;
         	
         /// <exclude />
     	[DataMember]
-    	public string  ApiKey
+    	public string  groupKey
     	{
-    		get { return this._apiKey; }
+    		get { return this._groupKey; }
     		
     		set
     		{
-    			if (this._apiKey == value)
+    			if (this._groupKey == value)
     			{
     				return;
     			}
     			
-    			this._apiKey = value;
-    			OnPropertyChanged("ApiKey"); 
+    			this._groupKey = value;
+    			OnPropertyChanged("groupKey"); 
     		}
     	}
     	
-    	string   _envInfo
+    	string   _machineId
         
             ;
         	
         /// <exclude />
     	[DataMember]
-    	public string  EnvInfo
+    	public string  machineId
     	{
-    		get { return this._envInfo; }
+    		get { return this._machineId; }
     		
     		set
     		{
-    			if (this._envInfo == value)
+    			if (this._machineId == value)
     			{
     				return;
     			}
     			
-    			this._envInfo = value;
-    			OnPropertyChanged("EnvInfo"); 
+    			this._machineId = value;
+    			OnPropertyChanged("machineId"); 
     		}
     	}
     	
@@ -364,14 +364,14 @@ namespace Kerberos.Data
     
     	public static  class Members
     	{
-    		public const string ApiKey = "ApiKey";
-    		public const string EnvInfo = "EnvInfo";
+    		public const string groupKey = "groupKey";
+    		public const string machineId = "machineId";
     	}
         
     	public static  class SqlVarMembers
     	{
-    		public const string ApiKey = "@ApiKey";
-    		public const string EnvInfo = "@EnvInfo";
+    		public const string groupKey = "@groupKey";
+    		public const string machineId = "@machineId";
     	}
     }
     
@@ -395,7 +395,7 @@ namespace Kerberos.Data
         	
         /// <exclude />
     	[DataMember]
-    	public CpuInfo  CpuUsage
+    	public CpuInfo  cpuUsage
     	{
     		get { return this._cpuUsage; }
     		
@@ -407,7 +407,7 @@ namespace Kerberos.Data
     			}
     			
     			this._cpuUsage = value;
-    			OnPropertyChanged("CpuUsage"); 
+    			OnPropertyChanged("cpuUsage"); 
     		}
     	}
     	
@@ -417,7 +417,7 @@ namespace Kerberos.Data
         	
         /// <exclude />
     	[DataMember]
-    	public MemoryInfo  MemoryUsage
+    	public MemoryInfo  memoryUsage
     	{
     		get { return this._memoryUsage; }
     		
@@ -429,7 +429,7 @@ namespace Kerberos.Data
     			}
     			
     			this._memoryUsage = value;
-    			OnPropertyChanged("MemoryUsage"); 
+    			OnPropertyChanged("memoryUsage"); 
     		}
     	}
     	
@@ -441,18 +441,18 @@ namespace Kerberos.Data
     
     	public static  new  class Members
     	{
-    		public const string ApiKey = "ApiKey";
-    		public const string EnvInfo = "EnvInfo";
-    		public const string CpuUsage = "CpuUsage";
-    		public const string MemoryUsage = "MemoryUsage";
+    		public const string groupKey = "groupKey";
+    		public const string machineId = "machineId";
+    		public const string cpuUsage = "cpuUsage";
+    		public const string memoryUsage = "memoryUsage";
     	}
         
     	public static  new  class SqlVarMembers
     	{
-    		public const string ApiKey = "ApiKey";
-    		public const string EnvInfo = "EnvInfo";
-    		public const string CpuUsage = "@CpuUsage";
-    		public const string MemoryUsage = "@MemoryUsage";
+    		public const string groupKey = "groupKey";
+    		public const string machineId = "machineId";
+    		public const string cpuUsage = "@cpuUsage";
+    		public const string memoryUsage = "@memoryUsage";
     	}
     }
     

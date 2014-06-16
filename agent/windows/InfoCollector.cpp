@@ -20,7 +20,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-// ic32.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 3,7 -regservice
+// ./ic32.exe -key ce3bd840-f0a7-11e3-ac10-0800200c9a66 -s straw.imyoyo.net -port 8282 -regservice
 
 int g_argc;
 _TCHAR** g_argv;
@@ -64,7 +64,31 @@ int _tmain(int argc, _TCHAR* argv[])
     }
 }
 
-string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo connection)
+void SetupHostPort(int argc, _TCHAR* argv[], ConnectionInfo &connection)
+{
+    wstring txt;
+
+    if (IsConsoleApp() == false)
+    {
+        txt = GetEnvVar(L"port");
+    }
+    else
+    {
+        if (cmdOptionExists(argv, argv + argc, L"-port") == true)
+        {
+            txt = getCmdOption(argv, argv + argc, L"-port");
+        }
+    }
+
+    if (txt.length() == 0)
+    {
+        return;
+    }
+
+    connection.Setport(_wtoi(txt.c_str()));
+}
+
+string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo &connection)
 {
     wstring txt;
 
@@ -97,9 +121,9 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 #endif
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-    string utfData = myconv.to_bytes(data);;
+    string utfData = myconv.to_bytes(data);
 
-    sendto(socketHandle, (const char *)utfData.c_str(), utfData.length(), 0,
+    sendto(socketHandle, (const char *)utfData.c_str(), (int)utfData.length(), 0,
         (struct sockaddr *) &remoteServAddr,
         sizeof(remoteServAddr));
 }
@@ -184,7 +208,7 @@ vector<int> GetIntervalTime(int argc, _TCHAR* argv[])
     split.SplitString(txt, L",");
     vector<int> intervalTimes;
 
-    for (int i = 0; i < split.GetCount(); i ++)
+    for (size_t i = 0; i < split.GetCount(); i ++)
     {
         int interval = ::_wtoi(txt.c_str());
         intervalTimes.push_back(interval);
@@ -213,11 +237,11 @@ void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sock
 
             sb.push_back(L"{");
             {
-                sb.push_back(L"\"" + SystemInfo::Members::CpuUsage + L"\":");
+                sb.push_back(L"\"" + SystemInfo::Members::cpuUsage + L"\":");
                 sb.push_back(L"{");
                 {
                     float totalUsage = 0.0f;
-                    sb.push_back(L"\"" + CpuInfo::Members::Unit + L"\":[");
+                    sb.push_back(L"\"" + CpuInfo::Members::unit + L"\":[");
                     if (RetrieveCpuInfo(sb, &totalUsage) == false)
                     {
                         Sleep(1000);
@@ -227,7 +251,7 @@ void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sock
                     sb.push_back(L"]");
 
                     wchar_t buf[40];
-                    swprintf(buf, L"}, \"%s\": %.2f", CpuInfo::Members::Total.c_str(), totalUsage);
+                    StringCchPrintf(buf, 40, L"}, \"%s\": %.2f", CpuInfo::Members::total.c_str(), totalUsage / 100);
                     sb.push_back(buf);
                 }
                 sb.push_back(L"},");
@@ -236,22 +260,22 @@ void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sock
                 __int64 currentUsage;
                 GetMemoryInfo(&maxMemory, &currentUsage);
 
-                sb.push_back(L"\"" + SystemInfo::Members::MemoryUsage + L"\":");
+                sb.push_back(L"\"" + SystemInfo::Members::memoryUsage + L"\":");
                 {
-                    sb.push_back(L"{\"" + MemoryInfo::Members::MaxMB + L"\":");
+                    sb.push_back(L"{\"" + MemoryInfo::Members::max + L"\":");
                     sb.push_back(maxMemory);
 
-                    sb.push_back(L", \"" + MemoryInfo::Members::CurrentMB + L"\":");
+                    sb.push_back(L", \"" + MemoryInfo::Members::current + L"\":");
                     sb.push_back(currentUsage);
                     sb.push_back(L"},");
                 }
 
-                sb.push_back(L"\"" + PacketBase::Members::ApiKey + L"\":");
+                sb.push_back(L"\"" + PacketBase::Members::groupKey + L"\":");
                 sb.push_back(L"\"");
                 sb.push_back(apiKey);
                 sb.push_back(L"\",");
 
-                sb.push_back(L"\"EnvInfo\":");
+                sb.push_back(L"\"" + PacketBase::Members::machineId + L"\":");
                 sb.push_back(L"\"");
                 sb.push_back(envKey);
                 sb.push_back(L"\"");
@@ -306,36 +330,24 @@ void ShowHelp()
     printf("samples:\n");
     printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5\n", platformId);
     printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5\n");
+    printf("        data server: 192.168.0.5:80\n");
     printf("        (optional: agent id by default - machine name)\n");
-    printf("        (optional: interval time by default)\n");
+    printf("\n");
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -port 8282\n", platformId);
+    printf("        apikey: 8CFDDE2478\n");
+    printf("        data server: 192.168.0.5:8282\n");
+    printf("        (optional: agent id by default - machine name)\n");
     printf("\n");
     printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100\n", platformId);
     printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5\n");
+    printf("        data server: 192.168.0.5:80\n");
     printf("        id: mypc100\n");
-    printf("        (optional: interval time by default)\n");
     printf("\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 5\n", platformId);
-    printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5\n");
-    printf("        id: mypc100\n");
-    printf("        every 5 seconds (default: 2sec)\n");
-    printf("\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 3,7\n", platformId);
-    printf("        apikey: 8CFDDE2478\n");
-    printf("        data server: 192.168.0.5\n");
-    printf("        id: mypc100\n");
-    printf("        send cpu/mem info every 3 seconds (default: 2sec)\n");
-    printf("        send disk info every 7 seconds (default: 5sec)\n");
-    printf("\n");
-    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100 -d 3,7 -regservice\n", platformId);
+    printf("    ic%d.exe -key 8CFDDE2478 -s 192.168.0.5 -id mypc100  -regservice\n", platformId);
     printf("        Register as NT Service with this info,\n");
     printf("            apikey: 8CFDDE2478\n");
-    printf("            data server: 192.168.0.5\n");
+    printf("            data server: 192.168.0.5:80\n");
     printf("            id: mypc100\n");
-    printf("            send cpu/mem info every 3 seconds (default: 2sec)\n");
-    printf("            send disk info every 7 seconds (default: 5sec)\n");
     printf("\n");
     printf("    ic%d.exe -unreg\n", platformId);
     printf("        Unregister NT Service\n");
@@ -649,28 +661,24 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
+        SetupHostPort(g_argc, g_argv, connection);
+
         if (cmdOptionExists(g_argv, g_argv + g_argc, L"-regservice") == true)
         {
-            DoRegistration(apiKey, envInfo, address, intervalTimes);
+            DoRegistration(apiKey, envInfo, address, connection.Getport(), intervalTimes);
             break;
         }
 
-        struct sockaddr_in cliAddr, remoteServAddr;
+        struct sockaddr_in remoteServAddr;
 
         remoteServAddr.sin_family = host->h_addrtype;
         memcpy((char *)&remoteServAddr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
         remoteServAddr.sin_port = htons((u_short)connection.Getport());
 
         /* socket creation */
-        SOCKET udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
-        cliAddr.sin_family = AF_INET;
-        cliAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        cliAddr.sin_port = htons(0);
-
-        if (::bind(udpSocket, (struct sockaddr *) &cliAddr, sizeof(cliAddr)) < 0)
-        {
-            OutputError(L"%d: cannot bind port\n", connection.Getport());
-            result = IC_ERROR_SOCKETBIND;
+        udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (udpSocket == INVALID_SOCKET) {
+            wprintf(L"socket failed with error: %ld\n", WSAGetLastError());
             break;
         }
 

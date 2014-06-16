@@ -79,13 +79,13 @@ void StringBuilder::clear()
 
 wstring StringBuilder::ToString()
 {
-    size_t nTotalSize = 0;
+    size_t totalSize = 0;
     for ( unsigned i = 0; i < m_vect.size(); i ++ ) {
-        nTotalSize += m_vect.at( i ).size();
+        totalSize += m_vect.at(i).size();
     }
 
-    wchar_t *tempBuf = new wchar_t[ nTotalSize + 1 ];
-    memset(tempBuf, 0, (nTotalSize + 1) * sizeof(wchar_t));
+    wchar_t *tempBuf = new wchar_t[totalSize + 1];
+    memset(tempBuf, 0, (totalSize + 1) * sizeof(wchar_t));
 
     size_t nPos = 0;
     for ( size_t i = 0; i < m_vect.size(); i ++ ) {
@@ -101,15 +101,15 @@ wstring StringBuilder::ToString()
 
 wchar_t *StringBuilder::ToStringMultiLine(int *allocatedSize)
 {
-    size_t nTotalSize = 0;
+    int totalSize = 0;
     for (unsigned i = 0; i < m_vect.size(); i++) {
-        nTotalSize += m_vect.at(i).size() + 1; // +1 == '\0'
+        totalSize += (int)m_vect.at(i).size() + 1; // +1 == '\0'
     }
 
-    *allocatedSize = (nTotalSize + 1) * sizeof(wchar_t);
+    *allocatedSize = (totalSize + 1) * sizeof(wchar_t);
 
-    wchar_t *tempBuf = new wchar_t[nTotalSize + 1]; // +1 == '\0'
-    memset(tempBuf, 0, (nTotalSize + 1) * sizeof(wchar_t));
+    wchar_t *tempBuf = new wchar_t[totalSize + 1]; // +1 == '\0'
+    memset(tempBuf, 0, (totalSize + 1) * sizeof(wchar_t));
 
     size_t nPos = 0;
     for (size_t i = 0; i < m_vect.size(); i++) {

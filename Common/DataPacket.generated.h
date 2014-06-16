@@ -3,7 +3,7 @@
 #pragma once
 
 
-// 2014-05-29 오후 11:17:20
+// 06/16/2014 20:30:05
 
 #include <string>
 #include <vector>
@@ -20,7 +20,7 @@ public:
     }
 
 private:
-	wstring _address = L"www.geeksaga.com";
+	wstring _address = L"straw.imyoyo.net";
 public:
 	wstring Getaddress()
     {
@@ -31,7 +31,7 @@ public:
         _address = value;
     }
 private:
-	int _port = 80;
+	int _port = 8282;
 public:
 	int Getport()
     {
@@ -95,15 +95,15 @@ public:
 	class Members
 	{
     public:
-		static wstring Unit;
-		static wstring Total;
+		static wstring unit;
+		static wstring total;
 	};
     
 	class SqlVarMembers
 	{
     public:
-		static wstring Unit;
-		static wstring Total;
+		static wstring unit;
+		static wstring total;
 	};
 };
 
@@ -118,41 +118,41 @@ public:
     }
 
 private:
-	long _maxMB;
+	long _max;
 public:
-	long GetmaxMB()
+	long Getmax()
     {
-        return _maxMB;
+        return _max;
     }
-	void SetmaxMB(long value)
+	void Setmax(long value)
     {
-        _maxMB = value;
+        _max = value;
     }
 private:
-	long _currentMB;
+	long _current;
 public:
-	long GetcurrentMB()
+	long Getcurrent()
     {
-        return _currentMB;
+        return _current;
     }
-	void SetcurrentMB(long value)
+	void Setcurrent(long value)
     {
-        _currentMB = value;
+        _current = value;
     }
 
 public:
 	class Members
 	{
     public:
-		static wstring MaxMB;
-		static wstring CurrentMB;
+		static wstring max;
+		static wstring current;
 	};
     
 	class SqlVarMembers
 	{
     public:
-		static wstring MaxMB;
-		static wstring CurrentMB;
+		static wstring max;
+		static wstring current;
 	};
 };
 
@@ -167,41 +167,41 @@ public:
     }
 
 private:
-	wstring _apiKey;
+	wstring _groupKey;
 public:
-	wstring GetapiKey()
+	wstring GetgroupKey()
     {
-        return _apiKey;
+        return _groupKey;
     }
-	void SetapiKey(wstring value)
+	void SetgroupKey(wstring value)
     {
-        _apiKey = value;
+        _groupKey = value;
     }
 private:
-	wstring _envInfo;
+	wstring _machineId;
 public:
-	wstring GetenvInfo()
+	wstring GetmachineId()
     {
-        return _envInfo;
+        return _machineId;
     }
-	void SetenvInfo(wstring value)
+	void SetmachineId(wstring value)
     {
-        _envInfo = value;
+        _machineId = value;
     }
 
 public:
 	class Members
 	{
     public:
-		static wstring ApiKey;
-		static wstring EnvInfo;
+		static wstring groupKey;
+		static wstring machineId;
 	};
     
 	class SqlVarMembers
 	{
     public:
-		static wstring ApiKey;
-		static wstring EnvInfo;
+		static wstring groupKey;
+		static wstring machineId;
 	};
 };
 
@@ -246,19 +246,19 @@ public:
 	class Members
 	{
     public:
-		wstring ApiKey;
-		wstring EnvInfo;
-		static wstring CpuUsage;
-		static wstring MemoryUsage;
+		wstring groupKey;
+		wstring machineId;
+		static wstring cpuUsage;
+		static wstring memoryUsage;
 	};
     
 	class SqlVarMembers
 	{
     public:
-		wstring ApiKey;
-		wstring EnvInfo;
-		static wstring CpuUsage;
-		static wstring MemoryUsage;
+		wstring groupKey;
+		wstring machineId;
+		static wstring cpuUsage;
+		static wstring memoryUsage;
 	};
 };
 

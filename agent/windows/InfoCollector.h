@@ -5,7 +5,8 @@
 wstring GetApiKey(int argc, _TCHAR* argv[]);
 wstring GetUID(int argc, _TCHAR* argv[]);
 wstring GetEnvInfo(int argc, _TCHAR* argv[]);
-string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo connection);
+string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo &connection);
+void SetupHostPort(int argc, _TCHAR* argv[], ConnectionInfo &connection);
 
 void OutputError(wstring txt, ...);
 
@@ -18,7 +19,7 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval);
 void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval);
 
-void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vector<int> intervalTimes);
+void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int port, vector<int> intervalTimes);
 void DoUnregistration();
 void DoStartService();
 BOOL DoStopService();

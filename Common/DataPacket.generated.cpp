@@ -1,7 +1,7 @@
 
 
 
-// 2014-05-29 오후 11:17:20
+// 06/16/2014 20:30:05
 
 #include "stdafx.h"
 #include "DataPacket.generated.h"
@@ -17,35 +17,35 @@
 
 
 
-		wstring CpuInfo::Members::Unit = L"Unit";
-		wstring CpuInfo::Members::Total = L"Total";
+		wstring CpuInfo::Members::unit = L"unit";
+		wstring CpuInfo::Members::total = L"total";
     
-		wstring CpuInfo::SqlVarMembers::Unit = L"Unit";
-		wstring CpuInfo::SqlVarMembers::Total = L"Total";
+		wstring CpuInfo::SqlVarMembers::unit = L"unit";
+		wstring CpuInfo::SqlVarMembers::total = L"total";
 
 
 
-		wstring MemoryInfo::Members::MaxMB = L"MaxMB";
-		wstring MemoryInfo::Members::CurrentMB = L"CurrentMB";
+		wstring MemoryInfo::Members::max = L"max";
+		wstring MemoryInfo::Members::current = L"current";
     
-		wstring MemoryInfo::SqlVarMembers::MaxMB = L"MaxMB";
-		wstring MemoryInfo::SqlVarMembers::CurrentMB = L"CurrentMB";
+		wstring MemoryInfo::SqlVarMembers::max = L"max";
+		wstring MemoryInfo::SqlVarMembers::current = L"current";
 
 
 
-		wstring PacketBase::Members::ApiKey = L"ApiKey";
-		wstring PacketBase::Members::EnvInfo = L"EnvInfo";
+		wstring PacketBase::Members::groupKey = L"groupKey";
+		wstring PacketBase::Members::machineId = L"machineId";
     
-		wstring PacketBase::SqlVarMembers::ApiKey = L"ApiKey";
-		wstring PacketBase::SqlVarMembers::EnvInfo = L"EnvInfo";
+		wstring PacketBase::SqlVarMembers::groupKey = L"groupKey";
+		wstring PacketBase::SqlVarMembers::machineId = L"machineId";
 
 
 
-		wstring SystemInfo::Members::CpuUsage = L"CpuUsage";
-		wstring SystemInfo::Members::MemoryUsage = L"MemoryUsage";
+		wstring SystemInfo::Members::cpuUsage = L"cpuUsage";
+		wstring SystemInfo::Members::memoryUsage = L"memoryUsage";
     
-		wstring SystemInfo::SqlVarMembers::CpuUsage = L"CpuUsage";
-		wstring SystemInfo::SqlVarMembers::MemoryUsage = L"MemoryUsage";
+		wstring SystemInfo::SqlVarMembers::cpuUsage = L"cpuUsage";
+		wstring SystemInfo::SqlVarMembers::memoryUsage = L"memoryUsage";
 
 
 

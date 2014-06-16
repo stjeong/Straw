@@ -174,7 +174,7 @@ bool RetrieveCpuInfo(StringBuilder &sb, float *totalUsage)
             old_cpuTime[i + 2] = currentKernel;
 
             wchar_t buf[25];
-            StringCchPrintf(buf, 25, L"%.2f", (kernel + user));
+            StringCchPrintf(buf, 25, L"%.2f", (kernel + user) / 100);
             sb.push_back(buf);
 
             if (j != numberOfCpu - 1)

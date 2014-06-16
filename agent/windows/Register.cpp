@@ -15,9 +15,11 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vector<int> intervalTimes)
+void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int port, vector<int> intervalTimes)
 {
     printf("Installing Service...\n");
+
+    DoUnregistration();
 
     SC_HANDLE scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
     if (!scm)
@@ -53,7 +55,7 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
             break;
         }
 
-        char szBuffer[MAX_PATH] = { 0 };
+        wchar_t szBuffer[MAX_PATH] = { 0 };
 
         StringBuilder sb;
 
@@ -61,6 +63,9 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
         sb.push_back(L"apiKey=" + apiKey);
         sb.push_back(L"envKey=" + envKey);
         sb.push_back("server=" + remoteServAddr);
+
+        StringCchPrintf(szBuffer, MAX_PATH, L"port=%d", port);
+        sb.push_back(szBuffer);
 
         if (RegOpenKey(HKEY_LOCAL_MACHINE, REG_SERVICE, &hkey) != ERROR_SUCCESS)
         {
@@ -77,8 +82,6 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, vecto
             break;
         }
 
-        printf("%S", szBuffer);
-        
         printf("Service successfully installed.\n");
 
     } while (false);
@@ -121,11 +124,18 @@ void DoUnregistration()
     do
     {
         printf("Opened Service Control Manager...\n");
-        SC_HANDLE myService = OpenService(scm, SERVICE_NAME, SERVICE_ALL_ACCESS | DELETE);
+        myService = OpenService(scm, SERVICE_NAME, SERVICE_ALL_ACCESS | DELETE);
 
         if (!myService)
         {
-            printf("OpenService fails! (%d)\n", GetLastError());
+            DWORD dwResult = GetLastError();
+            if (dwResult = ERROR_SERVICE_DOES_NOT_EXIST)
+            {
+                printf("Service doesn't exist!\n");
+                break;
+            }
+
+            printf("OpenService fails! (%d)\n", dwResult);
             break;
         }
 
@@ -605,7 +615,7 @@ void ProcessLatestUpdate(bool isConsoleApp)
         if (succeed == true)
         {
             wstring oldFileName = thisFileName;
-            oldFileName += currentVersion;
+            oldFileName += currentVersion + L".bak";
 
             ::DeleteFile(oldFileName.c_str());
 
@@ -711,14 +721,14 @@ wstring GetNewVersion(wstring txt)
 {
     wstring startTag = L"<version>";
 
-    int spos = txt.find(startTag);
-    if (spos == -1)
+    size_t spos = txt.find(startTag);
+    if (spos == wstring::npos)
     {
         return L"";
     }
 
-    int epos = txt.find(L"</version>", spos);
-    if (epos == -1)
+    size_t epos = txt.find(L"</version>", spos);
+    if (epos == wstring::npos)
     {
         return L"";
     }
@@ -733,19 +743,19 @@ wstring GetUpdateLocation(wstring txt, bool is32bit)
 
     StringCchPrintf(startTag, MAX_PATH, L"<location platform=\"%s\">", is32bit == true ? L"win32" : L"win64");
 
-    int spos = txt.find(startTag);
-    if (spos == -1)
+    size_t spos = txt.find(startTag);
+    if (spos == wstring::npos)
     {
         return L"";
     }
 
-    int epos = txt.find(L"</location>", spos);
-    if (epos == -1)
+    size_t epos = txt.find(L"</location>", spos);
+    if (epos == wstring::npos)
     {
         return L"";
     }
 
-    int len = wcslen(startTag);
+    size_t len = wcslen(startTag);
     spos += len;
     return txt.substr(spos, epos - spos);
 }
