@@ -6,7 +6,13 @@ $client = New-Object System.Net.WebClient
 $locationNode = Select-Xml -Xml $xmlData -XPath "//location[@platform='win32']"
 $moduleAddress = $locationNode[0].Node.InnerXml
 
-Stop-Service Straw
+$ServiceName = "StrawAgent"
+
+if ( Get-Service "$ServiceName*" -Include $ServiceName ) {
+    Stop-Service $ServiceName
+}
+
+
 
 $url = New-Object System.Uri($moduleAddress)
 

@@ -105,7 +105,7 @@ string GetHostAddress(int argc, _TCHAR* argv[], ConnectionInfo &connection)
         {
             txt = connection.Getaddress();
         }
-    
+
         return ws2s(txt);
     }
 }
@@ -221,7 +221,7 @@ vector<int> GetIntervalTime(int argc, _TCHAR* argv[])
     split.SplitString(txt, L",");
     vector<int> intervalTimes;
 
-    for (size_t i = 0; i < split.GetCount(); i ++)
+    for (size_t i = 0; i < split.GetCount(); i++)
     {
         int interval = ::_wtoi(txt.c_str());
         intervalTimes.push_back(interval);
@@ -675,47 +675,48 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
-#if _DEBUG
-        ::OutputDebugString(L"ServiceExecutionThread - data collect thread - start\n");
-#endif
-
-        thread processCpuMemThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
+        wstring appVersion = GetAppVersion(g_modulePath.c_str(), NULL, NULL, NULL, NULL);
+        OutputConsole(L"(%s) ServiceExecutionThread - data collect thread - start\n", appVersion.c_str());
         {
-            ProcessCpuMemInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[0]);
-        });
-
-        thread processDiskThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
-        {
-            ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
-        });
-
-        thread updateThread([]()
-        {
-            DWORD oneday = 1000 * 60 * 60 * 24;
-
-            while (true)
+            thread processCpuMemThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
             {
-                ProcessLatestUpdate();
-                Sleep(oneday);
-            }
-        });
+                ProcessCpuMemInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[0]);
+            });
 
-        if (g_isConsoleApp == TRUE)
-        {
-            printf("Press any key to exit...\n");
-            getchar();
-        }
-        else
-        {
-            WaitForSingleObject(g_killServiceEvent, INFINITE);
-        }
+            thread processDiskThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
+            {
+                ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
+            });
+
+            thread updateThread([]()
+            {
+                DWORD oneday = 1000 * 60 * 60 * 24;
+
+                while (true)
+                {
+                    ProcessLatestUpdate();
+                    Sleep(oneday);
+                }
+            });
+
+            if (g_isConsoleApp == TRUE)
+            {
+                printf("Press any key to exit...\n");
+                getchar();
+            }
+            else
+            {
+                WaitForSingleObject(g_killServiceEvent, INFINITE);
+            }
 
 #if _DEBUG
-        ::OutputDebugString(L"Service thread detaching...\n");
+            ::OutputDebugString(L"Service thread detaching...\n");
 #endif
-        processCpuMemThread.detach();
-        processDiskThread.detach();
-        updateThread.detach();
+            processCpuMemThread.detach();
+            processDiskThread.detach();
+            updateThread.detach();
+        }
+
 #if _DEBUG
         ::OutputDebugString(L"Service thread detached\n");
 #endif
