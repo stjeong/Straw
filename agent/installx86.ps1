@@ -6,6 +6,8 @@ $client = New-Object System.Net.WebClient
 $locationNode = Select-Xml -Xml $xmlData -XPath "//location[@platform='win32']"
 $moduleAddress = $locationNode[0].Node.InnerXml
 
+Stop-Service Straw
+
 $url = New-Object System.Uri($moduleAddress)
 
 $fileName = [IO.Path]::GetFileName($url.LocalPath)

@@ -210,7 +210,7 @@ wstring GetComputerName()
 
 vector<int> GetIntervalTime(int argc, _TCHAR* argv[])
 {
-    wstring txt = L"2,5";
+    wstring txt = L"1,1";
 
     if (cmdOptionExists(argv, argv + argc, L"-d") == true)
     {
@@ -262,7 +262,7 @@ void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sock
                     sb.push_back(L"]");
 
                     wchar_t buf[40];
-                    StringCchPrintf(buf, 40, L"}, \"%s\": %.2f", CpuInfo::Members::total.c_str(), totalUsage / 100);
+                    StringCchPrintf(buf, 40, L", \"%s\": %.2f", CpuInfo::Members::total.c_str(), totalUsage / 100);
                     sb.push_back(buf);
                 }
                 sb.push_back(L"},");

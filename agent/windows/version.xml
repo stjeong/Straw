@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
 <response>
-    <version>1.0.0.5</version>
-    <location platform="win32">https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/1.0.0.5/ic32.exe</location>
-    <location platform="win64">https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/1.0.0.5/ic64.exe</location>
+    <version>1.0.0.6</version>
+    <location platform="win32">https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/1.0.0.6/ic32.exe</location>
+    <location platform="win64">https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/1.0.0.6/ic64.exe</location>
 </response>
 
 
