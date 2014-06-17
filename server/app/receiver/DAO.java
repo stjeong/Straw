@@ -8,6 +8,8 @@ import java.util.Map;
 
 public class DAO {
 
+    // TODO db.raw.ensureIndex({time:1}); 근데 언제 날리지?? 그리고 그룹에도 인덱스 걸어야하는데?
+
     public static final String TEST_GROUP = "ce3bd840-f0a7-11e3-ac10-0800200c9a66";
 
     public static void insertGroupIfNotExist(String groupKey) {
