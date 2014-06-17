@@ -37,7 +37,7 @@ SystemInfo
 
 #>
 
-// <#= DateTime.Now #>
+// <#= DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture) #>
 
 <#
 	foreach (XmlNode enumItem in enumList)

@@ -3,6 +3,7 @@
 Thumbs.db
 *.obj
 *.exe
+!/agent/windows/deploy/*/*.exe
 *.pdb
 *.user
 *.aps

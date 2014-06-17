@@ -5,6 +5,7 @@
 #include <Winuser.h>
 
 #include <locale>
+#include <strsafe.h>
 
 string ws2s(const std::wstring& wstr)
 {
@@ -56,7 +57,7 @@ void StringBuilder::push_back(__int64 value)
     // 1099511627776 TB (tera)
     // 1125899906842624 PB (peta)
     wchar_t buf[25] = { 0 };
-    wsprintf(buf, L"%ld", value);
+    StringCchPrintf(buf, 25, L"%ld", value);
 
     m_vect.push_back(buf);
 }
@@ -79,13 +80,13 @@ void StringBuilder::clear()
 
 wstring StringBuilder::ToString()
 {
-    size_t nTotalSize = 0;
+    size_t totalSize = 0;
     for ( unsigned i = 0; i < m_vect.size(); i ++ ) {
-        nTotalSize += m_vect.at( i ).size();
+        totalSize += m_vect.at(i).size();
     }
 
-    wchar_t *tempBuf = new wchar_t[ nTotalSize + 1 ];
-    memset(tempBuf, 0, (nTotalSize + 1) * sizeof(wchar_t));
+    wchar_t *tempBuf = new wchar_t[totalSize + 1];
+    memset(tempBuf, 0, (totalSize + 1) * sizeof(wchar_t));
 
     size_t nPos = 0;
     for ( size_t i = 0; i < m_vect.size(); i ++ ) {
@@ -101,15 +102,15 @@ wstring StringBuilder::ToString()
 
 wchar_t *StringBuilder::ToStringMultiLine(int *allocatedSize)
 {
-    size_t nTotalSize = 0;
+    int totalSize = 0;
     for (unsigned i = 0; i < m_vect.size(); i++) {
-        nTotalSize += m_vect.at(i).size() + 1; // +1 == '\0'
+        totalSize += (int)m_vect.at(i).size() + 1; // +1 == '\0'
     }
 
-    *allocatedSize = (nTotalSize + 1) * sizeof(wchar_t);
+    *allocatedSize = (totalSize + 1) * sizeof(wchar_t);
 
-    wchar_t *tempBuf = new wchar_t[nTotalSize + 1]; // +1 == '\0'
-    memset(tempBuf, 0, (nTotalSize + 1) * sizeof(wchar_t));
+    wchar_t *tempBuf = new wchar_t[totalSize + 1]; // +1 == '\0'
+    memset(tempBuf, 0, (totalSize + 1) * sizeof(wchar_t));
 
     size_t nPos = 0;
     for (size_t i = 0; i < m_vect.size(); i++) {

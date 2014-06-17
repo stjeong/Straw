@@ -19,38 +19,38 @@
 
     <type name="ConnectionInfo">
         <properties>
-            <property name="Address" type="string" defaultValue="&quot;www.geeksaga.com&quot;" />
-            <property name="Port" type="int" defaultValue="80" />
+            <property name="Address" type="string" defaultValue="&quot;straw.imyoyo.net&quot;" />
+            <property name="Port" type="int" defaultValue="8282" />
         </properties>
     </type>
 
     <type name="CpuInfo">
         <properties>
             <!-- usage percent -->
-            <property name="Unit" type="float" isCollection="true" />
-            <property name="Total" type="float" />
+            <property name="unit" type="float" isCollection="true" />
+            <property name="total" type="float" />
         </properties>
     </type>
 
     <type name="MemoryInfo">
         <properties>
             <!-- in megabytes -->
-            <property name="MaxMB" type="long" />
-            <property name="CurrentMB" type="long" />
+            <property name="max" type="long" />
+            <property name="current" type="long" />
         </properties>
     </type>
 
     <type name="PacketBase">
         <properties>
-            <property name="ApiKey" type="string" size="40" />
-            <property name="EnvInfo" type="string" />
+            <property name="groupKey" type="string" />
+            <property name="machineId" type="string" />
         </properties>
     </type>
 
     <type name="SystemInfo" base="PacketBase">
         <properties>
-            <property name="CpuUsage" type="CpuInfo" />
-            <property name="MemoryUsage" type="MemoryInfo" />
+            <property name="cpuUsage" type="CpuInfo" />
+            <property name="memoryUsage" type="MemoryInfo" />
         </properties>
     </type>
 

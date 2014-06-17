@@ -39,14 +39,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClInclude Include="CommandLineParser.h" />
     <ClInclude Include="InfoCollector.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="StringSplit.h" />
     <ClInclude Include="SystemInfo.h" />
     <ClInclude Include="StringBuilder.h" />
@@ -167,6 +168,18 @@
     </ClCompile>
     <ClCompile Include="StringSplit.cpp" />
     <ClCompile Include="SystemInfo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="version.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="deploy\1.0.0.2\ic32.exe" />
+    <None Include="deploy\1.0.0.2\ic64.exe" />
+    <None Include="deploy\1.0.0.3\ic32.exe" />
+    <None Include="deploy\1.0.0.3\ic64.exe" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

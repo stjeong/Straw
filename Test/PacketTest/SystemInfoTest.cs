@@ -15,24 +15,24 @@ namespace PacketTest
         {
             SystemInfo info = new SystemInfo();
 
-            info.ApiKey = "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571";
-            info.EnvInfo = null;
+            info.groupKey = "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571";
+            info.machineId = null;
 
             // quad-core
             CpuInfo cpu = new CpuInfo();
-            cpu.Unit.Add(15.5f);
-            cpu.Unit.Add(0.0f);
-            cpu.Unit.Add(0.0f);
-            cpu.Unit.Add(0.0f);
+            cpu.unit.Add(15.5f);
+            cpu.unit.Add(0.0f);
+            cpu.unit.Add(0.0f);
+            cpu.unit.Add(0.0f);
 
-            cpu.Total = (float)(15.5 * 0.25);
-            info.CpuUsage = cpu;
+            cpu.total = (float)(15.5 * 0.25);
+            info.cpuUsage = cpu;
 
             MemoryInfo memoy = new MemoryInfo();
-            memoy.MaxMB = 8589934592; // 8 * 1024 * 1024 * 1024;
-            memoy.CurrentMB = 6442450944; // 6 * 1024 * 1024 * 1024;
+            memoy.max = 8589934592; // 8 * 1024 * 1024 * 1024;
+            memoy.current = 6442450944; // 6 * 1024 * 1024 * 1024;
 
-            info.MemoryUsage = memoy;
+            info.memoryUsage = memoy;
 
             string json = JsonConvert.SerializeObject(info);
             Trace.WriteLine(json);

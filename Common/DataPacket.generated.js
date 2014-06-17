@@ -8,22 +8,22 @@ SystemInfo
 		},
 	"MemoryUsage": {"Max":8589934592, "Current":6442450944},
 	"ApiKey": "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571",
-	"EnvInfo":null
+	"EnvInfo": "machineName"
 }
 */
 
 
 
 
-// 05/29/2014 23:17:20
+// 06/16/2014 20:30:05
 
 
 var ConnectionInfo =	
 {
 
-	address: "www.geeksaga.com",
+	address: "straw.imyoyo.net",
 	
-	port: 80,
+	port: 8282,
 	
 
 	Members: [
@@ -44,8 +44,8 @@ var CpuInfo =
 	
 
 	Members: [
-		"Unit",
-		"Total",
+		"unit",
+		"total",
 	]
 }
 
@@ -55,14 +55,14 @@ var CpuInfo =
 var MemoryInfo =	
 {
 
-	maxMB: 0,
+	max: 0,
 	
-	currentMB: 0,
+	current: 0,
 	
 
 	Members: [
-		"MaxMB",
-		"CurrentMB",
+		"max",
+		"current",
 	]
 }
 
@@ -72,14 +72,14 @@ var MemoryInfo =
 var PacketBase =	
 {
 
-	apiKey: "",
+	groupKey: "",
 	
-	envInfo: "",
+	machineId: "",
 	
 
 	Members: [
-		"ApiKey",
-		"EnvInfo",
+		"groupKey",
+		"machineId",
 	]
 }
 
@@ -95,10 +95,10 @@ var SystemInfo =
 	
 
 	Members: [
-		"ApiKey",
-		"EnvInfo",
-		"CpuUsage",
-		"MemoryUsage",
+		"groupKey",
+		"machineId",
+		"cpuUsage",
+		"memoryUsage",
 	]
 }
 
