@@ -2,8 +2,8 @@
 
 <response>
     <version>1.0.0.9</version>
-    <location platform="win32">https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/1.0.0.9/ic32.exe</location>
-    <location platform="win64">https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/1.0.0.9/ic64.exe</location>
+    <location platform="win32">https://github.com/stjeong/Straw/releases/download/v1.0.0.9-alpha/ic32.exe</location>
+    <location platform="win64">https://github.com/stjeong/Straw/releases/download/v1.0.0.9-alpha/ic64.exe</location>
 </response>
 
 
