@@ -3,7 +3,8 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index()
+GET     /                           controllers.Application.intro()
+GET     /dashboard                           controllers.Application.index()
 GET     /recent                           controllers.Application.recent()
 
 # Map static resources from the /public folder to the /assets URL path

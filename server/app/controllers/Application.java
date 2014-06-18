@@ -10,6 +10,10 @@ import java.util.*;
 
 public class Application extends Controller {
 
+    public static Result intro() {
+        return ok(intro.render());
+    }
+
     public static Result index() {
         return ok(index.render("STRAW !!!"));
     }
