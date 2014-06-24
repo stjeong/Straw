@@ -27,6 +27,8 @@ SERVICE_STATUS_HANDLE g_serviceStatusHandle = NULL;
 BOOL g_serviceRunning = FALSE;
 BOOL g_servicePaused = FALSE;
 HANDLE g_killServiceEvent = NULL;
+HANDLE g_killSafeExitEvent = NULL;
+
 wstring g_modulePath = L"";
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -114,7 +116,7 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 {
     wstring data = sb.ToString();
 
-    if (g_debugMode == true)
+    if (g_debugMode == TRUE)
     {
         OutputConsole(L"%s\n", data.c_str());
     }
@@ -236,7 +238,7 @@ vector<int> GetIntervalTime(int argc, _TCHAR* argv[])
     return intervalTimes;
 }
 
-void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval, HANDLE threadExitHandle)
+void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval)
 {
     StringBuilder sb;
     int sleepTime = interval * 1000;
@@ -303,16 +305,20 @@ void ProcessCpuMemInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sock
             }
         }
 
-        if (::WaitForSingleObject(threadExitHandle, sleepTime) == WAIT_TIMEOUT)
+        if (::WaitForSingleObject(g_killServiceEvent, sleepTime) == WAIT_TIMEOUT)
         {
             continue;
         }
+
+#if defined(_DEBUG)
+        ::OutputDebugString(L"ProcessCpuMemInfo-thread exited.");
+#endif
 
         break;
     }
 }
 
-void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval, HANDLE threadExitHandle)
+void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockaddr_in remoteServAddr, int interval)
 {
     StringBuilder sb;
 
@@ -325,11 +331,14 @@ void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockad
             sb.clear();
         }
 
-        if (::WaitForSingleObject(threadExitHandle, sleepTime) == WAIT_TIMEOUT)
+        if (::WaitForSingleObject(g_killServiceEvent, sleepTime) == WAIT_TIMEOUT)
         {
             continue;
         }
 
+#if defined(_DEBUG)
+        ::OutputDebugString(L"ProcessDiskInfo-thread exited.");
+#endif
         break;
     }
 }
@@ -413,7 +422,14 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
         g_killServiceEvent = CreateEvent(0, TRUE, FALSE, 0);
         if (!g_killServiceEvent)
         {
-            OutputError(L"CreateEvent fails! (%d)", GetLastError());
+            OutputError(L"CreateEvent-1 fails! (%d)", GetLastError());
+            break;
+        }
+
+        g_killSafeExitEvent = CreateEvent(0, TRUE, FALSE, 0);
+        if (!g_killSafeExitEvent)
+        {
+            OutputError(L"CreateEvent-2 fails! (%d)", GetLastError());
             break;
         }
 
@@ -455,7 +471,9 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
 
         // Now just wait for our killed service signal, and then exit, which
         // terminates the service!
-        WaitForSingleObject(g_killServiceEvent, INFINITE);
+        WaitForSingleObject(g_killSafeExitEvent, INFINITE);
+
+        UpdateSCMStatus(SERVICE_STOPPED, NO_ERROR, 0, 0, 0);
 
 #if _DEBUG
         ::OutputDebugString(L"WaitForSingleObject - end.\n");
@@ -689,20 +707,18 @@ DWORD ServiceExecutionThread(LPDWORD param)
         wstring appVersion = GetAppVersion(g_modulePath.c_str(), NULL, NULL, NULL, NULL);
         OutputConsole(L"(%s) ServiceExecutionThread - data collect thread - start\n", appVersion.c_str());
 
-        HANDLE threadExitHandle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-
         {
-            thread processCpuMemThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes, threadExitHandle]()
+            thread processCpuMemThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
             {
-                ProcessCpuMemInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[0], threadExitHandle);
+                ProcessCpuMemInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[0]);
             });
 
-            thread processDiskThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes, threadExitHandle]()
+            thread processDiskThread([apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes]()
             {
-                ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1], threadExitHandle);
+                ProcessDiskInfo(apiKey, envInfo, udpSocket, remoteServAddr, intervalTimes[1]);
             });
 
-            thread updateThread([threadExitHandle]()
+            thread updateThread([]()
             {
                 DWORD oneday = 1000 * 60 * 60 * 24;
 
@@ -710,7 +726,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
                 {
                     ProcessLatestUpdate();
 
-                    if (::WaitForSingleObject(threadExitHandle, oneday) == WAIT_TIMEOUT)
+                    if (::WaitForSingleObject(g_killServiceEvent, oneday) == WAIT_TIMEOUT)
                     {
                         continue;
                     }
@@ -726,25 +742,39 @@ DWORD ServiceExecutionThread(LPDWORD param)
             }
             else
             {
+#if _DEBUG
+                ::OutputDebugString(L"Service thread - WaitForSingleObject...\n");
+#endif
+
                 WaitForSingleObject(g_killServiceEvent, INFINITE);
             }
 
-            ::SetEvent(threadExitHandle);
-
 #if _DEBUG
             ::OutputDebugString(L"Service thread waiting...\n");
+            Sleep(1000);
 #endif
-            processCpuMemThread.join();
-            processDiskThread.join();
-            updateThread.join();
+
+            if (processCpuMemThread.joinable() == true)
+            {
+                processCpuMemThread.join();
+            }
+
+            if (processDiskThread.joinable() == true)
+            {
+                processDiskThread.join();
+            }
+
+            if (updateThread.joinable() == true)
+            {
+                updateThread.join();
+            }
 
 #if _DEBUG
-            ::OutputDebugString(L"Service thread detaching...\n");
+            ::OutputDebugString(L"All Service-threads exited...\n");
 #endif
-            processCpuMemThread.detach();
-            processDiskThread.detach();
-            updateThread.detach();
         }
+
+        ::SetEvent(g_killSafeExitEvent);
 
 #if _DEBUG
         ::OutputDebugString(L"Service thread detached\n");
@@ -753,7 +783,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
     } while (false);
 
 #if _DEBUG
-    ::OutputDebugString(L"ServiceExecutionThread - data collect thread - end\n");
+    ::OutputDebugString(L"ServiceExecutionThread - data collect thread - ending\n");
 #endif
 
     if (udpSocket != INVALID_SOCKET)
@@ -767,6 +797,10 @@ DWORD ServiceExecutionThread(LPDWORD param)
     }
 
     WSACleanup();
+
+#if _DEBUG
+    ::OutputDebugString(L"ServiceExecutionThread - data collect thread - ended\n");
+#endif
 
     return result;
 }
