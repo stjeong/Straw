@@ -1,19 +1,23 @@
 
+# 1. Build Agent Project x86/x64
+# 2. Modify version.xml
+# 3. Create a tag and upload ./Kerberos/deploy/....ver.../ic32.exe [ic64.exe] to github manually
+
 $buildStartTime = [DateTime]::Now
 Write-Output "===================== Build start straw agent for Windows"
 
 $projectPath = [IO.Path]::Combine($PSScriptRoot, "windows")
-$deployPath = [IO.Path]::Combine($projectPath, "deploy")
+$deployPath = [IO.Path]::Combine($PSScriptRoot, "..", "deploy")
 $projectFilePath = [IO.Path]::Combine($projectPath, "InfoCollector.vcxproj")
 
 $x86AgentName = "ic32.exe"
 $x64AgentName = "ic64.exe"
-$autoDeployPath = "https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/deploy/"
+$autoDeployPath = "https://github.com/stjeong/Straw/releases/download/"
+
+$releaseTag = "-alpha"
 
 Set-Location $projectPath
 Write-Output($projectFilePath)
-
-# $vsDevBatPath = "E:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\VsDevCmd.cmd"
 
 [Environment]::SetEnvironmentVariable("VisualStudioVersion", "12.0")
 
@@ -87,8 +91,8 @@ while ($true)
     $xmlDoc.Load($versionFilePath)
 
     $xmlDoc.SelectSingleNode("/response/version").InnerText = $fileVersion
-    $xmlDoc.SelectSingleNode("/response/location[@platform='win32']").InnerText = $autoDeployPath + $fileVersion + "/" + $x86AgentName
-    $xmlDoc.SelectSingleNode("/response/location[@platform='win64']").InnerText = $autoDeployPath + $fileVersion + "/" + $x64AgentName
+    $xmlDoc.SelectSingleNode("/response/location[@platform='win32']").InnerText = $autoDeployPath + $fileVersion + $releaseTag  + "/" + $x86AgentName
+    $xmlDoc.SelectSingleNode("/response/location[@platform='win64']").InnerText = $autoDeployPath + $fileVersion + $releaseTag  + "/" + $x64AgentName
 
     $xmlDoc.Save($versionFilePath)
 

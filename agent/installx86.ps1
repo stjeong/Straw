@@ -1,4 +1,5 @@
 
+# Install from Web
 
 $client = New-Object System.Net.WebClient
 [xml]$xmlData = $client.DownloadString("https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/version.xml")

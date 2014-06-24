@@ -170,16 +170,12 @@
     <ClCompile Include="SystemInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="version.xml" />
+    <Xml Include="version.xml">
+      <SubType>Designer</SubType>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="deploy\1.0.0.2\ic32.exe" />
-    <None Include="deploy\1.0.0.2\ic64.exe" />
-    <None Include="deploy\1.0.0.3\ic32.exe" />
-    <None Include="deploy\1.0.0.3\ic64.exe" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
