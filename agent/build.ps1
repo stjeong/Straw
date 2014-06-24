@@ -91,8 +91,8 @@ while ($true)
     $xmlDoc.Load($versionFilePath)
 
     $xmlDoc.SelectSingleNode("/response/version").InnerText = $fileVersion
-    $xmlDoc.SelectSingleNode("/response/location[@platform='win32']").InnerText = $autoDeployPath + $fileVersion + $releaseTag  + "/" + $x86AgentName
-    $xmlDoc.SelectSingleNode("/response/location[@platform='win64']").InnerText = $autoDeployPath + $fileVersion + $releaseTag  + "/" + $x64AgentName
+    $xmlDoc.SelectSingleNode("/response/location[@platform='win32']").InnerText = $autoDeployPath + "v" + $fileVersion + $releaseTag  + "/" + $x86AgentName
+    $xmlDoc.SelectSingleNode("/response/location[@platform='win64']").InnerText = $autoDeployPath + "v" + $fileVersion + $releaseTag  + "/" + $x64AgentName
 
     $xmlDoc.Save($versionFilePath)
 

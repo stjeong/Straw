@@ -2,8 +2,8 @@
 
 <response>
     <version>1.0.1.0</version>
-    <location platform="win32">https://github.com/stjeong/Straw/releases/download/1.0.1.0-alpha/ic32.exe</location>
-    <location platform="win64">https://github.com/stjeong/Straw/releases/download/1.0.1.0-alpha/ic64.exe</location>
+    <location platform="win32">https://github.com/stjeong/Straw/releases/download/v1.0.1.0-alpha/ic32.exe</location>
+    <location platform="win64">https://github.com/stjeong/Straw/releases/download/v1.0.1.0-alpha/ic64.exe</location>
 </response>
 
 
