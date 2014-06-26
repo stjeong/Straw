@@ -51,14 +51,9 @@ int _tmain(int argc, _TCHAR* argv[])
         };
 
         BOOL success;
-        // Register the service with the Service Control Manager
         success = StartServiceCtrlDispatcher(serviceTable);
         if (!success)
         {
-            // This error message would not show up unless we had the "allow service to
-            // interact with desktop" option checked, which is unlikely for a console mode
-            // app, but we'll print an error message anyway just in case there's someone
-            // around to see it.
             OutputError(L"StartServiceCtrlDispatcher fails! (%d)", GetLastError());
         }
     }
@@ -323,15 +318,119 @@ void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockad
     StringBuilder sb;
 
     int sleepTime = interval * 1000;
-
+    wchar_t driveLetter[_MAX_PATH + 1];
+    HRESULT hr;
+    ULARGE_INTEGER freeBytesAvailable;
+    ULARGE_INTEGER totalNumberOfBytes;
+    ULARGE_INTEGER totalNumberOfFreeBytes;
+    
     while (true)
     {
         if (g_servicePaused == FALSE)
         {
             sb.clear();
+
+            sb.push_back(L"{");
+
+            sb.push_back(L"\"" + StorageInfo::Members::disk + L"\":");
+            sb.push_back(L"[");
+
+            DWORD dwNeedLength = ::GetLogicalDriveStrings(0, NULL);
+
+            wchar_t *pWchBuf = nullptr;
+            wchar_t *pHead = nullptr;
+
+            do
+            {
+                if (dwNeedLength != 0)
+                {
+                    pWchBuf = new wchar_t[dwNeedLength + 1];
+                    if (pWchBuf == nullptr)
+                    {
+                        break;
+                    }
+
+                    pHead = pWchBuf;
+
+                    DWORD dwResult = ::GetLogicalDriveStrings(dwNeedLength, pWchBuf);
+
+                    while (dwResult > 0)
+                    {
+                        hr = StringCchPrintf(driveLetter, _MAX_PATH, L"%s", pWchBuf);
+                        if (FAILED(hr) == TRUE)
+                        {
+                            break;
+                        }
+
+                        int length = wcslen(driveLetter) + 1;
+                        if (length < 2)
+                        {
+                            break;
+                        }
+
+                        dwResult -= length;
+                        pWchBuf += length;
+
+                        if (::GetDiskFreeSpaceEx(driveLetter, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes) == FALSE)
+                        {
+                            break;
+                        }
+
+                        driveLetter[1] = '\0';
+
+                        sb.push_back(L"{ \"" + DiskInfo::Members::name + L"\": \"");
+                        sb.push_back(driveLetter);
+                        sb.push_back(L"\", ");
+
+                        sb.push_back(L"\"" + DiskInfo::Members::size + L"\": ");
+                        sb.push_back((__int64)totalNumberOfBytes.QuadPart);
+                        sb.push_back(L", ");
+
+                        sb.push_back(L"\"" + DiskInfo::Members::current + L"\": ");
+                        sb.push_back((__int64)(totalNumberOfBytes.QuadPart - totalNumberOfFreeBytes.QuadPart));
+                        sb.push_back(L"}");
+
+                        if (dwResult > 0)
+                        {
+                            sb.push_back(L",");
+                        }
+                    }
+                }
+            } while (false);
+
+            if (pHead != nullptr)
+            {
+                delete[] pHead;
+            }
+
+            sb.push_back(L"],");
+
+            sb.push_back(L"\"" + PacketBase::Members::groupKey + L"\":");
+            sb.push_back(L"\"");
+            sb.push_back(apiKey);
+            sb.push_back(L"\",");
+
+            sb.push_back(L"\"" + PacketBase::Members::machineId + L"\":");
+            sb.push_back(L"\"");
+            sb.push_back(envKey);
+            sb.push_back(L"\"");
+
+            sb.push_back(L"}");
         }
 
-        if (::WaitForSingleObject(g_killServiceEvent, sleepTime) == WAIT_TIMEOUT)
+#if defined(_DEBUG)
+        // ::OutputDebugString(sb.ToString().c_str());
+#endif
+
+        SendToServer(socketHandle, remoteServAddr, sb);
+
+        if (g_isConsoleApp == TRUE)
+        {
+            printf(":");
+        }
+
+        DWORD dwEventResult = ::WaitForSingleObject(g_killServiceEvent, sleepTime);
+        if (dwEventResult == WAIT_TIMEOUT)
         {
             continue;
         }
@@ -383,14 +482,6 @@ void ShowHelp()
     OutputConsole(L"        Unregister NT Service\n");
 }
 
-//   ServiceMain -
-//   ServiceMain is called when the Service Control Manager wants to
-// launch the service.  It should not return until the service has
-// stopped. To accomplish this, for this example, it waits blocking
-// on an event just before the end of the function.  That event gets
-// set by the function which terminates the service above.  Also, if
-// there is an error starting the service, ServiceMain returns immediately
-// without launching the main service thread, terminating the service.
 VOID ServiceMain(DWORD argc, LPTSTR *argv)
 {
 #if _DEBUG
@@ -398,7 +489,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
 #endif
 
     BOOL success;
-    // First we must call the Registration function
     g_serviceStatusHandle = RegisterServiceCtrlHandler(SERVICE_NAME,
         (LPHANDLER_FUNCTION)ServiceCtrlHandler);
 
@@ -410,19 +500,10 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
 
     do
     {
-        // Next Notify the Service Control Manager of progress
         success = UpdateSCMStatus(SERVICE_START_PENDING, NO_ERROR, 0, 1, 5000);
         if (!success)
         {
             OutputError(L"1. UpdateSCMStatus fails! (%d)", GetLastError());
-            break;
-        }
-
-        // Now create the our service termination event to block on
-        g_killServiceEvent = CreateEvent(0, TRUE, FALSE, 0);
-        if (!g_killServiceEvent)
-        {
-            OutputError(L"CreateEvent-1 fails! (%d)", GetLastError());
             break;
         }
 
@@ -433,7 +514,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
             break;
         }
 
-        // Notify the SCM of progress again
         success = UpdateSCMStatus(SERVICE_START_PENDING, NO_ERROR, 0, 2, 1000);
         if (!success)
         {
@@ -441,7 +521,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
             break;
         }
 
-        // Notify the SCM of progress again...
         success = UpdateSCMStatus(SERVICE_START_PENDING, NO_ERROR, 0, 3, 5000);
         if (!success)
         {
@@ -449,7 +528,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
             break;
         }
 
-        // Start the service execution thread by calling our StartServiceThread function...
         success = StartServiceThread();
         if (!success)
         {
@@ -457,7 +535,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
             break;
         }
 
-        // The service is now running.  Notify the SCM of this fact.
         success = UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0, 0, 0);
         if (!success)
         {
@@ -469,8 +546,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
         ::OutputDebugString(L"WaitForSingleObject - started.\n");
 #endif
 
-        // Now just wait for our killed service signal, and then exit, which
-        // terminates the service!
         WaitForSingleObject(g_killSafeExitEvent, INFINITE);
 
         UpdateSCMStatus(SERVICE_STOPPED, NO_ERROR, 0, 0, 0);
@@ -481,7 +556,6 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
     } while (false);
 }
 
-//   Handles the events dispatched by the Service Control Manager.
 VOID ServiceCtrlHandler(DWORD controlCode)
 {
     BOOL success;
@@ -489,44 +563,29 @@ VOID ServiceCtrlHandler(DWORD controlCode)
 
     switch (controlCode)
     {
-        // There is no START option because
-        // ServiceMain gets called on a start
-        // Pause the service
     case SERVICE_CONTROL_PAUSE:
         if (g_serviceRunning && !g_servicePaused)
         {
-            // Tell the SCM we're about to Pause.
             success = UpdateSCMStatus(SERVICE_PAUSE_PENDING, NO_ERROR, 0, 1, 1000);
             g_servicePaused = TRUE;
             serviceCurrentStatus = SERVICE_PAUSED;
         }
         break;
 
-        // Resume from a pause
     case SERVICE_CONTROL_CONTINUE:
         if (g_serviceRunning && g_servicePaused)
         {
-            // Tell the SCM we're about to Resume.
             success = UpdateSCMStatus(SERVICE_CONTINUE_PENDING, NO_ERROR, 0, 1, 1000);
             g_servicePaused = FALSE;
             serviceCurrentStatus = SERVICE_RUNNING;
         }
         break;
-        // Update the current status for the SCM.
 
     case SERVICE_CONTROL_INTERROGATE:
-        // This does nothing, here we will just fall through to the end
-        // and send our current status.
         break;
 
-        // For a shutdown, we can do cleanup but it must take place quickly
-        // because the system will go down out from under us.
-        // For this app we have time to stop here, which I do by just falling
-        // through to the stop message.
     case SERVICE_CONTROL_SHUTDOWN:
-        // Stop the service
     case SERVICE_CONTROL_STOP:
-        // Tell the SCM we're about to Stop.
         serviceCurrentStatus = SERVICE_STOP_PENDING;
         success = UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 1, 5000);
         KillService();
@@ -539,7 +598,6 @@ VOID ServiceCtrlHandler(DWORD controlCode)
     UpdateSCMStatus(serviceCurrentStatus, NO_ERROR, 0, 0, 0);
 }
 
-// This function updates the service status for the SCM
 BOOL UpdateSCMStatus(DWORD dwCurrentState,
     DWORD dwWin32ExitCode,
     DWORD dwServiceSpecificExitCode,
@@ -548,11 +606,9 @@ BOOL UpdateSCMStatus(DWORD dwCurrentState,
 {
     BOOL success;
     SERVICE_STATUS serviceStatus;
-    // Fill in all of the SERVICE_STATUS fields
     serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     serviceStatus.dwCurrentState = dwCurrentState;
-    // If in the process of something, then accept
-    // no control events, else accept anything
+    
     if (dwCurrentState == SERVICE_START_PENDING)
     {
         serviceStatus.dwControlsAccepted = 0;
@@ -564,8 +620,7 @@ BOOL UpdateSCMStatus(DWORD dwCurrentState,
             SERVICE_ACCEPT_PAUSE_CONTINUE |
             SERVICE_ACCEPT_SHUTDOWN;
     }
-    // if a specific exit code is defines, set up
-    // the Win32 exit code properly
+
     if (dwServiceSpecificExitCode == 0)
     {
         serviceStatus.dwWin32ExitCode = dwWin32ExitCode;
@@ -574,10 +629,11 @@ BOOL UpdateSCMStatus(DWORD dwCurrentState,
     {
         serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
     }
+    
     serviceStatus.dwServiceSpecificExitCode = dwServiceSpecificExitCode;
     serviceStatus.dwCheckPoint = dwCheckPoint;
     serviceStatus.dwWaitHint = dwWaitHint;
-    // Pass the status record to the SCM
+    
     success = SetServiceStatus(g_serviceStatusHandle, &serviceStatus);
     if (!success)
     {
@@ -590,14 +646,9 @@ BOOL UpdateSCMStatus(DWORD dwCurrentState,
 void KillService()
 {
     g_serviceRunning = FALSE;
-    // Set the event that is blocking ServiceMain
-    // so that ServiceMain can return
     SetEvent(g_killServiceEvent);
 }
 
-// ServiceExecutionThread -
-//   This is the main thread of execution for the
-// service while it is running.
 DWORD ServiceExecutionThread(LPDWORD param)
 {
 #if _DEBUG
@@ -616,6 +667,14 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
     do
     {
+        g_killServiceEvent = CreateEvent(0, TRUE, FALSE, 0);
+        if (!g_killServiceEvent)
+        {
+            OutputError(L"CreateEvent fails! (%d)", GetLastError());
+            result = IC_EVENT_CREATE_FAIL;
+            break;
+        }
+
         wstring apiKey;
         wstring envInfo;
         vector<int> intervalTimes;
@@ -805,13 +864,10 @@ DWORD ServiceExecutionThread(LPDWORD param)
     return result;
 }
 
-// StartService -
-//   This starts the service by creating its execution thread.
 BOOL StartServiceThread()
 {
     DWORD id;
 
-    // Start the service's thread
     HANDLE threadHandle = CreateThread(0, 0,
         (LPTHREAD_START_ROUTINE)ServiceExecutionThread, 0, 0, &id);
 

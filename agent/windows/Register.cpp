@@ -15,6 +15,9 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
+#import <winhttp.dll> no_namespace, named_guids  
+#include <msxml.h>
+
 void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int port, vector<int> intervalTimes)
 {
     OutputConsole(L"Installing Service...\n");
@@ -149,7 +152,6 @@ void DoUnregistration()
             break;
         }
 
-        // Remove the service
         success = DeleteService(myService);
         if (success)
         {
@@ -242,8 +244,6 @@ BOOL DoStopService()
     DWORD dwWaitTime;
     BOOL stopped = FALSE;
 
-    // Get a handle to the SCM database. 
-
     SC_HANDLE schSCManager = OpenSCManager(
         NULL,                    // local computer
         NULL,                    // ServicesActive database 
@@ -255,7 +255,6 @@ BOOL DoStopService()
         return FALSE;
     }
 
-    // Get a handle to the service.
     SC_HANDLE schService = OpenService(
         schSCManager,         // SCM database 
         SERVICE_NAME,            // name of service 
@@ -271,7 +270,6 @@ BOOL DoStopService()
             break;
         }
 
-        // Make sure the service is not already stopped.
         if (!QueryServiceStatusEx(
             schService,
             SC_STATUS_PROCESS_INFO,
@@ -290,17 +288,12 @@ BOOL DoStopService()
             break;
         }
 
-        // If a stop is pending, wait for it.
         bool exitLoop = false;
 
         while (ssp.dwCurrentState == SERVICE_STOP_PENDING)
         {
             exitLoop = true;
             OutputConsole(L"Service stop pending...\n");
-
-            // Do not wait longer than the wait hint. A good interval is 
-            // one-tenth of the wait hint but not less than 1 second  
-            // and not more than 10 seconds. 
 
             dwWaitTime = ssp.dwWaitHint / 10;
 
@@ -341,14 +334,12 @@ BOOL DoStopService()
             break;
         }
 
-        // Send a stop code to the service.
         if (!ControlService(schService, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)&ssp))
         {
             OutputError(L"ControlService failed (%d)\n", GetLastError());
             break;
         }
 
-        // Wait for the service to stop.
         while (ssp.dwCurrentState != SERVICE_STOPPED)
         {
             Sleep(ssp.dwWaitHint);
@@ -400,9 +391,6 @@ BOOL DoStopService()
 
     return stopped;
 }
-
-#import <winhttp.dll> no_namespace, named_guids  
-#include <msxml.h>
 
 void ProcessLatestUpdate()
 {
@@ -541,10 +529,9 @@ void ProcessLatestUpdate()
         IStream*    pStream = NULL;
         BYTE        bBuffer[8192];
         DWORD       cb, cbRead, cbWritten;
-        // Check that an IStream was received.
+
         if (VT_UNKNOWN == V_VT(&varResponse) || VT_STREAM == V_VT(&varResponse))
         {
-            // Get IStream interface pStream.
             hr = V_UNKNOWN(&varResponse)->QueryInterface(IID_IStream,
                 reinterpret_cast<void**>(&pStream));
         }
@@ -558,7 +545,6 @@ void ProcessLatestUpdate()
             break;
         }
 
-        //  Gets the temp path env string (no guarantee it's a valid path).
         DWORD dwRetVal = GetTempPath(MAX_PATH,          // length of the buffer
             lpTempPathBuffer); // buffer for path 
         if (dwRetVal > MAX_PATH || (dwRetVal == 0))
@@ -567,7 +553,6 @@ void ProcessLatestUpdate()
             break;
         }
 
-        //  Generates a temporary file name. 
         dwRetVal = GetTempFileName(lpTempPathBuffer, // directory for tmp files
             L"straw",     // temp file name prefix 
             0,                // create unique name 
@@ -641,7 +626,6 @@ void ProcessLatestUpdate()
         ::DeleteFile(szTempFileName);
     }
 
-    // Release memory.
     if (pIWinHttpRequest)
     {
         pIWinHttpRequest->Release();

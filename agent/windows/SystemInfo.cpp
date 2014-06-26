@@ -59,8 +59,8 @@ bool GetMemoryInfo(__int64 *maxMemory, __int64 *currentUsage)
             return false;
         }
 
-        *maxMemory = (memStatus.ullTotalPhys / 1024 / 1024);
-        *currentUsage = ((memStatus.ullTotalPhys - memStatus.ullAvailPhys) / 1024 / 1024);
+        *maxMemory = memStatus.ullTotalPhys;
+        *currentUsage = memStatus.ullTotalPhys - memStatus.ullAvailPhys;
     }
 
     return true;

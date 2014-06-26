@@ -1,7 +1,7 @@
 
 
 
-// 06/16/2014 20:30:05
+// 06/26/2014 23:20:15
 
 #include "stdafx.h"
 #include "DataPacket.generated.h"
@@ -33,6 +33,16 @@
 
 
 
+		wstring DiskInfo::Members::name = L"name";
+		wstring DiskInfo::Members::size = L"size";
+		wstring DiskInfo::Members::current = L"current";
+    
+		wstring DiskInfo::SqlVarMembers::name = L"name";
+		wstring DiskInfo::SqlVarMembers::size = L"size";
+		wstring DiskInfo::SqlVarMembers::current = L"current";
+
+
+
 		wstring PacketBase::Members::groupKey = L"groupKey";
 		wstring PacketBase::Members::machineId = L"machineId";
     
@@ -46,6 +56,12 @@
     
 		wstring SystemInfo::SqlVarMembers::cpuUsage = L"cpuUsage";
 		wstring SystemInfo::SqlVarMembers::memoryUsage = L"memoryUsage";
+
+
+
+		wstring StorageInfo::Members::disk = L"disk";
+    
+		wstring StorageInfo::SqlVarMembers::disk = L"disk";
 
 
 

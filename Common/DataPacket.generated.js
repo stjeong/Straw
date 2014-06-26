@@ -1,21 +1,33 @@
 /*
 SystemInfo
 {
-	"CpuUsage":
+	"cpuUsage":
 		{
-            "Unit":[15.5,0.0,0.0,0.0]},
-		    "Total": 3.87	
+            "unit":[15.5,0.0,0.0,0.0]},
+		    "total": 3.87	
 		},
-	"MemoryUsage": {"Max":8589934592, "Current":6442450944},
-	"ApiKey": "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571",
-	"EnvInfo": "machineName"
+	"memoryUsage": {"max":8589934592, "current":6442450944},
+	"groupKey": "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571",
+	"machineId": "machineName"
 }
+
+StorageInfo
+{
+    "disk":
+        [
+            { "name": "C", "size": 163243, "current": 34322 },
+            { "name": "D", "size": 163243, "current": 34322 }
+        ],
+	"groupKey": "f31fc79434df8e4b7f9fd1f5bebe5b111baf8571",
+	"machineId": "machineName"
+}
+
 */
 
 
 
 
-// 06/16/2014 20:30:05
+// 06/26/2014 23:20:15
 
 
 var ConnectionInfo =	
@@ -69,6 +81,26 @@ var MemoryInfo =
 	
 
 
+var DiskInfo =	
+{
+
+	name: "",
+	
+	size: 0,
+	
+	current: 0,
+	
+
+	Members: [
+		"name",
+		"size",
+		"current",
+	]
+}
+
+	
+
+
 var PacketBase =	
 {
 
@@ -104,6 +136,25 @@ var SystemInfo =
 
 			
             SystemInfo.prototype = new PacketBase();
+
+				
+
+
+var StorageInfo =	
+{
+
+	disk: null,
+	
+
+	Members: [
+		"groupKey",
+		"machineId",
+		"disk",
+	]
+}
+
+			
+            StorageInfo.prototype = new PacketBase();
 
 				
 

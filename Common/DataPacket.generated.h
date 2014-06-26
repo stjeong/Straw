@@ -3,7 +3,7 @@
 #pragma once
 
 
-// 06/16/2014 20:30:05
+// 06/26/2014 23:20:15
 
 #include <string>
 #include <vector>
@@ -157,6 +157,68 @@ public:
 };
 
 
+class DiskInfo
+		
+{
+public:
+
+    DiskInfo()
+    {
+    }
+
+private:
+	wstring _name;
+public:
+	wstring Getname()
+    {
+        return _name;
+    }
+	void Setname(wstring value)
+    {
+        _name = value;
+    }
+private:
+	long _size;
+public:
+	long Getsize()
+    {
+        return _size;
+    }
+	void Setsize(long value)
+    {
+        _size = value;
+    }
+private:
+	long _current;
+public:
+	long Getcurrent()
+    {
+        return _current;
+    }
+	void Setcurrent(long value)
+    {
+        _current = value;
+    }
+
+public:
+	class Members
+	{
+    public:
+		static wstring name;
+		static wstring size;
+		static wstring current;
+	};
+    
+	class SqlVarMembers
+	{
+    public:
+		static wstring name;
+		static wstring size;
+		static wstring current;
+	};
+};
+
+
 class PacketBase
 		
 {
@@ -259,6 +321,50 @@ public:
 		wstring machineId;
 		static wstring cpuUsage;
 		static wstring memoryUsage;
+	};
+};
+
+
+class StorageInfo
+			: 
+
+            			    PacketBase
+			
+					
+{
+public:
+
+    StorageInfo()
+    {
+    }
+
+private:
+	vector<DiskInfo> _disk;
+public:
+	vector<DiskInfo> Getdisk()
+    {
+        return _disk;
+    }
+	void Setdisk(vector<DiskInfo> value)
+    {
+        _disk = value;
+    }
+
+public:
+	class Members
+	{
+    public:
+		wstring groupKey;
+		wstring machineId;
+		static wstring disk;
+	};
+    
+	class SqlVarMembers
+	{
+    public:
+		wstring groupKey;
+		wstring machineId;
+		static wstring disk;
 	};
 };
 

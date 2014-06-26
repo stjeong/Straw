@@ -1,7 +1,7 @@
 
 
 
-// 06/16/2014 20:30:05
+// 06/26/2014 23:20:15
 
 namespace Kerberos.Data
 {
@@ -288,6 +288,119 @@ namespace Kerberos.Data
     
     
     [DataContract]
+    public partial class DiskInfo
+    			: 
+    
+                
+    						INotifyPropertyChanged
+    					
+    {
+        
+    
+        
+    
+    	
+    	string   _name
+        
+            ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public string  name
+    	{
+    		get { return this._name; }
+    		
+    		set
+    		{
+    			if (this._name == value)
+    			{
+    				return;
+    			}
+    			
+    			this._name = value;
+    			OnPropertyChanged("name"); 
+    		}
+    	}
+    	
+    	long   _size
+        
+            ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public long  size
+    	{
+    		get { return this._size; }
+    		
+    		set
+    		{
+    			if (this._size == value)
+    			{
+    				return;
+    			}
+    			
+    			this._size = value;
+    			OnPropertyChanged("size"); 
+    		}
+    	}
+    	
+    	long   _current
+        
+            ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public long  current
+    	{
+    		get { return this._current; }
+    		
+    		set
+    		{
+    			if (this._current == value)
+    			{
+    				return;
+    			}
+    			
+    			this._current = value;
+    			OnPropertyChanged("current"); 
+    		}
+    	}
+    	
+    
+    
+    
+    
+        	[field:NonSerialized]
+        	public event PropertyChangedEventHandler PropertyChanged;
+    	protected virtual void OnPropertyChanged(string propertyName)
+    	{
+    		if (PropertyChanged == null)
+    		{
+    			return;
+    		}
+    
+    		PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+    	}   
+        
+             
+    
+    	public static  class Members
+    	{
+    		public const string name = "name";
+    		public const string size = "size";
+    		public const string current = "current";
+    	}
+        
+    	public static  class SqlVarMembers
+    	{
+    		public const string name = "@name";
+    		public const string size = "@size";
+    		public const string current = "@current";
+    	}
+    }
+    
+    
+    [DataContract]
     public partial class PacketBase
     			: 
     
@@ -453,6 +566,63 @@ namespace Kerberos.Data
     		public const string machineId = "machineId";
     		public const string cpuUsage = "@cpuUsage";
     		public const string memoryUsage = "@memoryUsage";
+    	}
+    }
+    
+    
+    [DataContract]
+    public partial class StorageInfo
+    			: 
+    
+                			    PacketBase
+    			
+    					
+    {
+        
+    
+        
+    
+    	
+    	ObservableCollection<DiskInfo>   _disk
+        
+            = new ObservableCollection<DiskInfo>  ()         ;
+        	
+        /// <exclude />
+    	[DataMember]
+    	public ObservableCollection<DiskInfo>  disk
+    	{
+    		get { return this._disk; }
+    		
+    		set
+    		{
+    			if (this._disk == value)
+    			{
+    				return;
+    			}
+    			
+    			this._disk = value;
+    			OnPropertyChanged("disk"); 
+    		}
+    	}
+    	
+    
+    
+    
+    
+                 
+    
+    	public static  new  class Members
+    	{
+    		public const string groupKey = "groupKey";
+    		public const string machineId = "machineId";
+    		public const string disk = "disk";
+    	}
+        
+    	public static  new  class SqlVarMembers
+    	{
+    		public const string groupKey = "groupKey";
+    		public const string machineId = "machineId";
+    		public const string disk = "@disk";
     	}
     }
     

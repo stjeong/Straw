@@ -34,8 +34,15 @@
 
     <type name="MemoryInfo">
         <properties>
-            <!-- in megabytes -->
             <property name="max" type="long" />
+            <property name="current" type="long" />
+        </properties>
+    </type>
+
+    <type name="DiskInfo">
+        <properties>
+            <property name="name" type="string" />
+            <property name="size" type="long" />
             <property name="current" type="long" />
         </properties>
     </type>
@@ -51,6 +58,12 @@
         <properties>
             <property name="cpuUsage" type="CpuInfo" />
             <property name="memoryUsage" type="MemoryInfo" />
+        </properties>
+    </type>
+
+    <type name="StorageInfo" base="PacketBase">
+        <properties>
+            <property name="disk" type="DiskInfo" isCollection="true" />
         </properties>
     </type>
 

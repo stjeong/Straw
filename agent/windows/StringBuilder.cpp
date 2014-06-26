@@ -57,7 +57,7 @@ void StringBuilder::push_back(__int64 value)
     // 1099511627776 TB (tera)
     // 1125899906842624 PB (peta)
     wchar_t buf[25] = { 0 };
-    StringCchPrintf(buf, 25, L"%ld", value);
+    StringCchPrintf(buf, 25, L"%I64d", value);
 
     m_vect.push_back(buf);
 }
