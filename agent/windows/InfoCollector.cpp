@@ -559,7 +559,7 @@ VOID ServiceMain(DWORD argc, LPTSTR *argv)
 VOID ServiceCtrlHandler(DWORD controlCode)
 {
     BOOL success;
-    DWORD serviceCurrentStatus = 0;
+    DWORD serviceCurrentStatus = controlCode;
 
     switch (controlCode)
     {
@@ -568,7 +568,6 @@ VOID ServiceCtrlHandler(DWORD controlCode)
         {
             success = UpdateSCMStatus(SERVICE_PAUSE_PENDING, NO_ERROR, 0, 1, 1000);
             g_servicePaused = TRUE;
-            serviceCurrentStatus = SERVICE_PAUSED;
         }
         break;
 
@@ -577,7 +576,6 @@ VOID ServiceCtrlHandler(DWORD controlCode)
         {
             success = UpdateSCMStatus(SERVICE_CONTINUE_PENDING, NO_ERROR, 0, 1, 1000);
             g_servicePaused = FALSE;
-            serviceCurrentStatus = SERVICE_RUNNING;
         }
         break;
 
@@ -586,7 +584,6 @@ VOID ServiceCtrlHandler(DWORD controlCode)
 
     case SERVICE_CONTROL_SHUTDOWN:
     case SERVICE_CONTROL_STOP:
-        serviceCurrentStatus = SERVICE_STOP_PENDING;
         success = UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 1, 5000);
         KillService();
         return;
@@ -646,6 +643,11 @@ BOOL UpdateSCMStatus(DWORD dwCurrentState,
 void KillService()
 {
     g_serviceRunning = FALSE;
+
+#if _DEBUG
+    ::OutputDebugString(L"KillService called\n");
+#endif
+
     SetEvent(g_killServiceEvent);
 }
 
@@ -804,7 +806,6 @@ DWORD ServiceExecutionThread(LPDWORD param)
 #if _DEBUG
                 ::OutputDebugString(L"Service thread - WaitForSingleObject...\n");
 #endif
-
                 WaitForSingleObject(g_killServiceEvent, INFINITE);
             }
 
