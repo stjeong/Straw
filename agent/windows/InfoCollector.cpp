@@ -29,7 +29,9 @@ BOOL g_servicePaused = FALSE;
 HANDLE g_killServiceEvent = NULL;
 HANDLE g_killSafeExitEvent = NULL;
 
+wstring g_moduleFilePath = L"";
 wstring g_modulePath = L"";
+// wstring g_
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -113,7 +115,7 @@ void SendToServer(SOCKET socketHandle, sockaddr_in remoteServAddr, StringBuilder
 
     if (g_debugMode == TRUE)
     {
-        OutputConsole(L"%s\n", data.c_str());
+       // OutputConsole(L"%s\n", data.c_str());
     }
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
@@ -450,7 +452,7 @@ void ShowHelp()
     int platformId = 32;
 #endif
 
-    wstring appVersion = GetAppVersion(g_modulePath.c_str(), NULL, NULL, NULL, NULL);
+    wstring appVersion = GetAppVersion(g_moduleFilePath.c_str(), NULL, NULL, NULL, NULL);
 
     OutputConsole(L"ic%d.exe (ver %s)\n", platformId, appVersion.c_str());
     OutputConsole(L"ic%d.exe -h\n", platformId);
@@ -657,7 +659,10 @@ DWORD ServiceExecutionThread(LPDWORD param)
     ::OutputDebugString(L"ServiceExecutionThread\n");
 #endif
 
-    IntializeSystemInfo();
+    if (IntializeSystemInfo() == FALSE)
+    {
+        return IC_NO_INITIALIZE;
+    }
 
     WORD wVersionRequested = MAKEWORD(1, 1);
     WSADATA wsaData;
@@ -715,6 +720,16 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
+        if (cmdOptionExists(g_argv, g_argv + g_argc, L"-restart") == true)
+        {
+            if (g_isConsoleApp == false)
+            {
+                RestartService();
+            }
+
+            break;
+        }
+
         apiKey = GetApiKey(g_argc, g_argv);
         envInfo = GetEnvInfo(g_argc, g_argv);
         intervalTimes = GetIntervalTime(g_argc, g_argv);
@@ -765,7 +780,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
-        wstring appVersion = GetAppVersion(g_modulePath.c_str(), NULL, NULL, NULL, NULL);
+        wstring appVersion = GetAppVersion(g_moduleFilePath.c_str(), NULL, NULL, NULL, NULL);
         OutputConsole(L"(%s) ServiceExecutionThread - data collect thread - start\n", appVersion.c_str());
 
         {

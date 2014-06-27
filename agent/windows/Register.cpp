@@ -18,6 +18,70 @@
 #import <winhttp.dll> no_namespace, named_guids  
 #include <msxml.h>
 
+void FireRestartCommand()
+{
+    if (g_modulePath.size() == 0)
+    {
+        OutputError(L"No modulePath");
+        return;
+    }
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+#if defined(_WIN64)
+    int platformId = 64;
+#else
+    int platformId = 32;
+#endif
+
+    wchar_t filePath[_MAX_PATH];
+    HRESULT hr = StringCchPrintf(filePath, _MAX_PATH, L"%sic%d.exe", g_modulePath.c_str(), platformId);
+    if (FAILED(hr) == TRUE)
+    {
+        OutputError(L"Error in composing file path");
+        return;
+    }
+
+    wchar_t restartCmd[] = L"-restart";
+    if (::CreateProcess(filePath, restartCmd, NULL, NULL, FALSE,
+        0, NULL, NULL, &si, &pi) == 0)
+    {
+        OutputError(L"FAIL: %s %s", filePath, restartCmd);
+        return;
+    }
+}
+
+void RestartService()
+{
+    wchar_t cmdPath[_MAX_PATH];
+    if (ExpandEnvironmentStrings(L"%windir%\\system32\\cmd.exe", cmdPath, _MAX_PATH) == 0)
+    {
+        return;
+    }
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    wchar_t stopCmd[] = L"/C net stop StrawAgent";
+    ::CreateProcess(cmdPath, stopCmd, NULL, NULL, FALSE,
+        0, NULL, NULL, &si, &pi);
+
+    ::WaitForSingleObject(pi.hProcess, 1000 * 10);
+
+    wchar_t startCmd[] = L"/C net start StrawAgent";
+    ::CreateProcess(cmdPath, startCmd, NULL, NULL, FALSE,
+        0, NULL, NULL, &si, &pi);
+}
+
 void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int port, vector<int> intervalTimes)
 {
     OutputConsole(L"Installing Service...\n");
@@ -37,7 +101,7 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
 
     do
     {
-        wstring filePath = g_modulePath;
+        wstring filePath = g_moduleFilePath;
         wchar_t safeFilePath[MAX_PATH];
         StringCchPrintf(safeFilePath, MAX_PATH, L"\"%s\"", filePath.c_str());
 
@@ -402,7 +466,7 @@ void ProcessLatestUpdate()
     wchar_t szTempFileName[MAX_PATH] { 0 };
     wchar_t lpTempPathBuffer[MAX_PATH] = { 0 };
 
-    wstring thisFileName = g_modulePath;
+    wstring thisFileName = g_moduleFilePath;
     wstring currentVersion;
 
     currentVersion = GetAppVersion(thisFileName.c_str(), &majorVersion, &minorVersion, &buildNumber, &revisionNumber);
@@ -617,6 +681,8 @@ void ProcessLatestUpdate()
                 OutputError(L"Update fails (%d)", GetLastError());
                 break;
             }
+
+            FireRestartCommand();
         }
 
     } while (false);

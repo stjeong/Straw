@@ -33,16 +33,41 @@ bool IsConsoleApp()
     return result != L"1";
 }
 
-void IntializeSystemInfo()
+BOOL IntializeSystemInfo()
 {
     wchar_t thisFileName[4096];
     GetModuleFileName(NULL, thisFileName, 4096);
-    g_modulePath = thisFileName;
+    g_moduleFilePath = thisFileName;
+
+    wchar_t path_buffer[_MAX_PATH];
+    wchar_t drive[_MAX_DRIVE];
+    wchar_t dir[_MAX_DIR];
+
+    errno_t err = _wsplitpath_s(g_moduleFilePath.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
+    if (err != 0)
+    {
+        return FALSE;
+    }
+
+    HRESULT hr = StringCchPrintf(path_buffer, _MAX_PATH, L"%s%s", drive, dir);
+    if (FAILED(hr) == TRUE)
+    {
+        return FALSE;
+    }
+
+    g_modulePath = path_buffer;
     
     if (NtQuerySystemInformation == nullptr)
     {
         NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
     }
+
+    if (NtQuerySystemInformation == nullptr)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 bool GetMemoryInfo(__int64 *maxMemory, __int64 *currentUsage)

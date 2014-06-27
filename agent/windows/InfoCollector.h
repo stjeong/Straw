@@ -2,6 +2,9 @@
 
 #include "stdafx.h"
 
+extern wstring g_moduleFilePath;
+extern wstring g_modulePath;
+
 BOOL GetDebugMode(int argc, _TCHAR* argv[]);
 wstring GetApiKey(int argc, _TCHAR* argv[]);
 wstring GetUID(int argc, _TCHAR* argv[]);
@@ -40,4 +43,5 @@ void KillService();
 DWORD ServiceExecutionThread(LPDWORD param);
 BOOL StartServiceThread();
 
-extern wstring g_modulePath;
+void FireRestartCommand();
+void RestartService();
