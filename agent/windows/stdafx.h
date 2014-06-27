@@ -30,6 +30,10 @@ enum IC_RSEULT {
 
 #define SERVICE_NAME L"StrawAgent"
 #define REG_SERVICE L"SYSTEM\\CurrentControlSet\\Services\\" ##SERVICE_NAME
+
+#define SERVICE_STOP_CMD L"/C net stop " ##SERVICE_NAME;
+#define SERVICE_START_CMD L"/C net start " ##SERVICE_NAME;
+
 #define UPDATE_CHECK_URL L"https://raw.githubusercontent.com/stjeong/Straw/master/agent/windows/version.xml"
 
 void OutputError(wchar_t *fmt, ...);

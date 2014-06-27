@@ -722,11 +722,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
         if (cmdOptionExists(g_argv, g_argv + g_argc, L"-restart") == true)
         {
-            if (g_isConsoleApp == false)
-            {
-                RestartService();
-            }
-
+            RestartService();
             break;
         }
 

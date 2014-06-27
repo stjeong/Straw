@@ -20,6 +20,11 @@
 
 void FireRestartCommand()
 {
+    if (g_isConsoleApp == false)
+    {
+        return;
+    }
+
     if (g_modulePath.size() == 0)
     {
         OutputError(L"No modulePath");
@@ -71,13 +76,13 @@ void RestartService()
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    wchar_t stopCmd[] = L"/C net stop StrawAgent";
+    wchar_t stopCmd[] = SERVICE_STOP_CMD;
     ::CreateProcess(cmdPath, stopCmd, NULL, NULL, FALSE,
         0, NULL, NULL, &si, &pi);
 
     ::WaitForSingleObject(pi.hProcess, 1000 * 10);
 
-    wchar_t startCmd[] = L"/C net start StrawAgent";
+    wchar_t startCmd[] = SERVICE_START_CMD;
     ::CreateProcess(cmdPath, startCmd, NULL, NULL, FALSE,
         0, NULL, NULL, &si, &pi);
 }

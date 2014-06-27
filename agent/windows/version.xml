@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
 <response>
-    <version>1.0.1.4</version>
-    <location platform="win32">https://github.com/stjeong/Straw/releases/download/v1.0.1.4-alpha/ic32.exe</location>
-    <location platform="win64">https://github.com/stjeong/Straw/releases/download/v1.0.1.4-alpha/ic64.exe</location>
+    <version>1.0.1.5</version>
+    <location platform="win32">https://github.com/stjeong/Straw/releases/download/v1.0.1.5-alpha/ic32.exe</location>
+    <location platform="win64">https://github.com/stjeong/Straw/releases/download/v1.0.1.5-alpha/ic64.exe</location>
 </response>
 
 
