@@ -15,7 +15,7 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#import <winhttp.dll> no_namespace, named_guids  
+#import <winhttpcom.dll> no_namespace, named_guids  
 #include <msxml.h>
 
 void FireRestartCommand()
@@ -119,11 +119,12 @@ void DoRegistration(wstring apiKey, wstring envKey, string remoteServAddr, int p
             SERVICE_AUTO_START,  // The service will be started by us manually
             SERVICE_ERROR_NORMAL,  // If error during service start, don't misbehave.
             safeFilePath,
-            0, 0, 0, 0, 0);
+            0, 0, 0, L".\\kevin", L"test@1004");
 
         if (!myService)
         {
-            OutputError(L"CreateService fails! (%d)\n", GetLastError());
+            DWORD dwError = GetLastError();
+            OutputError(L"CreateService fails! (%d)\n", dwError);
             break;
         }
 

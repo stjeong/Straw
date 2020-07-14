@@ -20,7 +20,7 @@ public:
     }
 
 private:
-	wstring _address = L"straw.imyoyo.net";
+	wstring _address = L"www.naver.com";
 public:
 	wstring Getaddress()
     {

@@ -726,12 +726,15 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
+        ::OutputDebugString(L"ServiceExecutionThread - GetInfo...\n");
+
         apiKey = GetApiKey(g_argc, g_argv);
         envInfo = GetEnvInfo(g_argc, g_argv);
         intervalTimes = GetIntervalTime(g_argc, g_argv);
 
         if (apiKey.length() == 0)
         {
+            ::OutputDebugString(L"ServiceExecutionThread - NO ApiKey\n");
             OutputError(L"NO ApiKey\n");
             result = IC_NO_APIKEY;
             showHelp = true;
@@ -740,6 +743,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
 
         if (envInfo.length() == 0)
         {
+            ::OutputDebugString(L"ServiceExecutionThread - NO AgentID Info\n");
             OutputError(L"NO AgentID Info\n");
             result = IC_NO_AGENTIDINFO;
             showHelp = true;
@@ -750,6 +754,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
         struct hostent *host = gethostbyname(address.c_str());
         if (host == nullptr)
         {
+            ::OutputDebugString(L"ServiceExecutionThread - Can't resolve host address\n");
             OutputError(L"Can't resolve host address: %s\n", address.c_str());
             result = IC_NO_RESOLVE_HOSTADDR;
             break;
@@ -776,6 +781,7 @@ DWORD ServiceExecutionThread(LPDWORD param)
             break;
         }
 
+        ::OutputDebugString(L"ServiceExecutionThread - socket...\n");
         wstring appVersion = GetAppVersion(g_moduleFilePath.c_str(), NULL, NULL, NULL, NULL);
         OutputConsole(L"(%s) ServiceExecutionThread - data collect thread - start\n", appVersion.c_str());
 
