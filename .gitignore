@@ -43,3 +43,6 @@ tech/
 .project
 RUNNING_PID
 /.vs/Straw/v16
+/.vs/Straw/v17
+/.vs/Straw/FileContentIndex
+/packages/Newtonsoft.Json.13.0.1

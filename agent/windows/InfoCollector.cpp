@@ -364,7 +364,7 @@ void ProcessDiskInfo(wstring apiKey, wstring envKey, SOCKET socketHandle, sockad
                             break;
                         }
 
-                        int length = wcslen(driveLetter) + 1;
+                        int length = (int)(wcslen(driveLetter) + 1);
                         if (length < 2)
                         {
                             break;

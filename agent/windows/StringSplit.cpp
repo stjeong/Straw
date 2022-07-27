@@ -27,8 +27,6 @@ void StringSplit::SplitString(wstring data, wstring delimeter)
             sindex = eindex + delimeter.length();
         }
     }
-
-    temp.empty();
 }
 
 // Split 메모리를 비웁니다.
